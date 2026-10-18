@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#FAF8F3" />
+  <meta name="theme-color" content="#F2F7FA" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>大阪・海之京都 雙人旅冊｜2026.10.22–10.25</title>
+  <link rel="icon" type="image/png" href="./icon.png" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
@@ -18,20 +20,26 @@
       <button type="button" id="sync-banner-close" class="fx-pill">知道了</button>
     </div>
 
-    <!-- 3.1 頂部 Header -->
+    <!-- 3.1 頂部 Header（右上角隱藏式換匯 + 天氣，身份移至「更多」） -->
     <header class="top-header">
-      <div class="eyebrow-row">
-        <div id="header-eyebrow" class="eyebrow">OSAKA · D-4</div>
+      <div class="headtop">
+        <div class="brand-row">
+          <img src="./icon.png" alt="海之京都旅冊圖示" class="brand-icon" />
+          <div>
+            <div id="header-eyebrow" class="eyebrow">OSAKA · KYOTO BY THE SEA</div>
+            <div id="header-subtitle" class="header-subtitle">大阪・環球影城・海之京都</div>
+          </div>
+        </div>
         <div class="header-right-actions">
-          <button type="button" id="identity-pill" class="identity-pill" title="前往設定切換身份">
-            我是：<strong id="current-user-label">未選擇</strong>
-          </button>
-          <button type="button" id="weather-btn" class="weather-btn">
+          <button type="button" id="weather-btn" class="weather-btn" aria-expanded="false">
             <span>☀ 天氣</span>
+          </button>
+          <button type="button" id="fx-btn" class="fx-pill-btn" aria-expanded="false" title="點開換匯計算機">
+            <span id="fxp-rate" class="fxp-rate">1 ¥ ≈ 0.215$</span>
+            <span class="fxp-hint">換匯 ▾</span>
           </button>
         </div>
       </div>
-      <div id="header-subtitle" class="header-subtitle">老公與老婆的大阪・環球影城・海之京都四日秋旅</div>
       <div id="header-cities" class="header-cities">關西機場 · 難波 · 環球影城 · 天橋立 · 伊根 · 梅田</div>
     </header>
 
@@ -44,8 +52,12 @@
       <div id="weather-content" style="margin-top:6px;"></div>
     </section>
 
-    <!-- 3.2 匯率條 -->
-    <section class="fx-bar" aria-label="日圓台幣匯率換算">
+    <!-- 3.2 隱藏式換匯面板（點擊右上角「換匯 ▾」展開） -->
+    <section id="fx-drawer" class="fx-bar" aria-label="日圓台幣匯率換算">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:700;color:var(--accent);">日圓 ⇄ 台幣 即時換匯計算機</span>
+        <button type="button" id="fx-close-btn" class="fx-pill">收起</button>
+      </div>
       <div class="fx-top-row">
         <div class="fx-input-group">
           <span id="fx-left-label" class="fx-currency-label">日圓 ¥</span>
@@ -115,110 +127,6 @@
 
       <!-- 行程卡片清單 -->
       <div id="tl-list" class="tl-list"></div>
-
-      <!-- 當日路線（手繪地圖 7:9） -->
-      <div class="section-label">當日路線 · ROUTE MAP</div>
-      <div class="route-map-card">
-        <div class="route-svg-wrap">
-          <svg viewBox="0 0 350 450" xmlns="http://www.w3.org/2000/svg" aria-label="大阪與海之京都手繪路線圖">
-            <defs>
-              <marker id="arr-d1" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                <path d="M0,0 L6,3 L0,6 Z" fill="#B0432E" />
-              </marker>
-              <marker id="arr-d2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                <path d="M0,0 L6,3 L0,6 Z" fill="#4A7C63" />
-              </marker>
-              <marker id="arr-d3" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                <path d="M0,0 L6,3 L0,6 Z" fill="#C99A4B" />
-              </marker>
-              <marker id="arr-d4" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                <path d="M0,0 L6,3 L0,6 Z" fill="#4A6B82" />
-              </marker>
-            </defs>
-            <!-- 手繪海岸線與山脈背景 -->
-            <rect width="350" height="450" fill="#FAF8F3" />
-            <!-- 若狹灣 / 日本海 (北側) -->
-            <path d="M 0,48 Q 70,62 125,52 T 240,68 T 350,40 L 350,0 L 0,0 Z" fill="#EFECE4" stroke="#E8E2D6" stroke-width="1" />
-            <!-- 天橋立沙洲細節 -->
-            <path d="M 122,62 Q 138,57 154,60" stroke="#C99A4B" stroke-width="2.5" stroke-linecap="round" fill="none" />
-            <!-- 大阪灣 (西南側) -->
-            <path d="M 0,250 Q 95,245 128,285 Q 145,320 112,375 Q 92,415 65,450 L 0,450 Z" fill="#EFECE4" stroke="#E8E2D6" stroke-width="1" />
-            <!-- 關西機場人工島 -->
-            <rect x="64" y="378" width="28" height="14" rx="2" fill="#FAF8F3" stroke="#8A8177" stroke-width="1.2" transform="rotate(-22 78 385)" />
-            <!-- 淀川水系細線 -->
-            <path d="M 350,195 Q 250,215 198,236 T 122,265" stroke="#E8E2D6" stroke-width="2" fill="none" />
-
-            <!-- Day 1 路線 (磚紅 #B0432E): KIX -> 難波 APA -> 心齋橋/道頓堀 -->
-            <g id="map-route-0" class="map-route-layer" opacity="1">
-              <path d="M 86,376 Q 152,350 186,304" stroke="#B0432E" stroke-width="2.6" stroke-dasharray="5,4" fill="none" marker-end="url(#arr-d1)" />
-              <path d="M 192,292 Q 204,282 196,272" stroke="#B0432E" stroke-width="2.6" stroke-dasharray="4,3" fill="none" marker-end="url(#arr-d1)" />
-            </g>
-
-            <!-- Day 2 路線 (綠 #4A7C63): 難波 -> 西九條 -> USJ 往返 -->
-            <g id="map-route-1" class="map-route-layer" opacity="0.1">
-              <path d="M 182,294 Q 154,282 134,270" stroke="#4A7C63" stroke-width="2.6" stroke-dasharray="5,4" fill="none" marker-end="url(#arr-d2)" />
-              <path d="M 134,262 Q 160,272 184,288" stroke="#4A7C63" stroke-width="2" stroke-dasharray="3,3" fill="none" />
-            </g>
-
-            <!-- Day 3 路線 (金 #C99A4B): 難波/日本橋 -> 西舞鶴 -> 天橋立 -> 伊根舟屋 -> 心齋橋 -->
-            <g id="map-route-2" class="map-route-layer" opacity="0.1">
-              <path d="M 200,290 Q 212,195 190,112" stroke="#C99A4B" stroke-width="2.6" stroke-dasharray="5,4" fill="none" marker-end="url(#arr-d3)" />
-              <path d="M 184,104 Q 158,88 138,76" stroke="#C99A4B" stroke-width="2.6" stroke-dasharray="4,3" fill="none" marker-end="url(#arr-d3)" />
-              <path d="M 140,68 Q 154,48 172,42" stroke="#C99A4B" stroke-width="2.6" stroke-dasharray="4,3" fill="none" marker-end="url(#arr-d3)" />
-              <path d="M 178,48 Q 248,165 198,274" stroke="#C99A4B" stroke-width="2.2" stroke-dasharray="5,5" fill="none" marker-end="url(#arr-d3)" />
-            </g>
-
-            <!-- Day 4 路線 (藍 #4A6B82): 難波 -> 中崎町 -> 梅田 -> 難波 -> KIX -->
-            <g id="map-route-3" class="map-route-layer" opacity="0.1">
-              <path d="M 192,290 Q 204,254 208,224" stroke="#4A6B82" stroke-width="2.6" stroke-dasharray="5,4" fill="none" marker-end="url(#arr-d4)" />
-              <path d="M 204,220 L 192,232" stroke="#4A6B82" stroke-width="2.4" fill="none" marker-end="url(#arr-d4)" />
-              <path d="M 188,240 Q 184,268 188,290" stroke="#4A6B82" stroke-width="2.4" stroke-dasharray="4,3" fill="none" marker-end="url(#arr-d4)" />
-              <path d="M 184,302 Q 134,335 86,374" stroke="#4A6B82" stroke-width="2.6" stroke-dasharray="5,4" fill="none" marker-end="url(#arr-d4)" />
-            </g>
-
-            <!-- 地標節點與文字 -->
-            <!-- 伊根舟屋 -->
-            <circle cx="175" cy="40" r="4.5" fill="#FAF8F3" stroke="#26211E" stroke-width="1.8" />
-            <text x="185" y="43" font-size="11" font-weight="700" fill="#26211E">伊根舟屋</text>
-            <text x="185" y="55" font-size="9.5" fill="#8A8177">伊根湾遊覧船</text>
-
-            <!-- 天橋立 -->
-            <circle cx="134" cy="72" r="4.5" fill="#FAF8F3" stroke="#26211E" stroke-width="1.8" />
-            <text x="58" y="74" font-size="11" font-weight="700" fill="#26211E">天橋立</text>
-            <text x="48" y="86" font-size="9.5" fill="#8A8177">飛龍観・智恩寺</text>
-
-            <!-- 西舞鶴 -->
-            <circle cx="188" cy="108" r="4" fill="#FAF8F3" stroke="#8A8177" stroke-width="1.6" />
-            <text x="198" y="111" font-size="10.5" fill="#26211E">西舞鶴駅 (丹後海上列車)</text>
-
-            <!-- 中崎町・梅田 -->
-            <circle cx="208" cy="220" r="4" fill="#FAF8F3" stroke="#26211E" stroke-width="1.6" />
-            <text x="218" y="222" font-size="10.5" font-weight="700" fill="#26211E">中崎町</text>
-            <circle cx="190" cy="236" r="4.5" fill="#FAF8F3" stroke="#26211E" stroke-width="1.8" />
-            <text x="200" y="242" font-size="11" font-weight="700" fill="#26211E">梅田 (LUCUA)</text>
-
-            <!-- USJ -->
-            <circle cx="130" cy="266" r="5" fill="#FAF8F3" stroke="#4A7C63" stroke-width="2" />
-            <text x="26" y="264" font-size="11" font-weight="700" fill="#26211E">日本環球影城</text>
-            <text x="46" y="276" font-size="9.5" fill="#8A8177">USJ・任天堂</text>
-
-            <!-- 心齋橋・道頓堀 -->
-            <circle cx="194" cy="272" r="4" fill="#FAF8F3" stroke="#26211E" stroke-width="1.6" />
-            <text x="204" y="275" font-size="10.5" fill="#26211E">心齋橋・道頓堀・日本橋</text>
-
-            <!-- 難波 APA 飯店 -->
-            <circle cx="188" cy="296" r="5.5" fill="#B0432E" stroke="#FAF8F3" stroke-width="1.5" />
-            <text x="200" y="300" font-size="11.5" font-weight="700" fill="#B0432E">難波 (APA 難波車站前塔)</text>
-
-            <!-- 關西國際機場 KIX -->
-            <circle cx="78" cy="384" r="5" fill="#FAF8F3" stroke="#C99A4B" stroke-width="2" />
-            <text x="98" y="388" font-size="11" font-weight="700" fill="#26211E">關西國際機場 (KIX)</text>
-            <text x="98" y="401" font-size="9.5" fill="#8A8177">VZ566 抵達 / GK057 返程</text>
-          </svg>
-        </div>
-        <div id="route-summary-line" class="route-summary-line"></div>
-        <div id="route-jp-line" class="route-jp-line"></div>
-      </div>
     </main>
 
     <!-- ==================== M2 記帳（總花費統計與分類明細） ==================== -->
@@ -316,7 +224,7 @@
 
       <button type="button" id="pl-add-trigger" class="add-trigger-btn pl-trigger">
         <span>＋ 推薦店家／景點</span>
-        <span style="font-size:11.5px;color:var(--sub);font-weight:400;">收藏口袋名單 · 打卡</span>
+        <span style="font-size:11.5px;color:var(--sub);font-weight:400;">收藏口袋名單 · 隨時導航</span>
       </button>
 
       <form id="pl-form" class="inline-form" novalidate>
@@ -363,8 +271,8 @@
         </div>
         <div id="chk-list"></div>
         <div style="display:flex;gap:6px;margin-top:10px;">
-          <input type="text" id="chk-new-input" class="form-input" placeholder="新增自訂行前準備項目..." style="padding:6px 9px;font-size:12.5px;" />
-          <button type="button" id="chk-add-btn" class="btn-secondary" style="width:auto;margin:0;white-space:nowrap;padding:6px 12px;">新增</button>
+          <input type="text" id="chk-new-input" class="form-input" placeholder="新增自訂行前準備項目..." style="padding:7px 10px;" />
+          <button type="button" id="chk-add-btn" class="btn-secondary" style="width:auto;margin:0;white-space:nowrap;padding:7px 12px;">新增</button>
         </div>
       </div>
 
@@ -372,12 +280,8 @@
       <div class="section-label">2 · 實用官網與電子票券夾</div>
       <div id="more-links-wrap" class="card" style="display:flex;flex-direction:column;gap:8px;"></div>
 
-      <!-- 3. 打卡王 -->
-      <div class="section-label">3 · 美食景點打卡紀錄</div>
-      <div id="more-leaderboard" class="card"></div>
-
-      <!-- 4. 天氣說明 -->
-      <div class="section-label">4 · 10月下旬大阪・海之京都氣候指南</div>
+      <!-- 3. 天氣說明 -->
+      <div class="section-label">3 · 10月下旬大阪・海之京都氣候指南</div>
       <div class="card">
         <div style="font-size:13.5px;font-weight:700;margin-bottom:4px;">大阪市區（難波・USJ・梅田）＆ 京都北部（天橋立・伊根）</div>
         <p style="font-size:12.5px;color:var(--sub);margin-bottom:8px;">
@@ -386,16 +290,16 @@
         <button type="button" id="more-open-weather-btn" class="btn-secondary" style="margin:0;">查看右上角即時天氣預報</button>
       </div>
 
-      <!-- 5. 兩則短提醒 -->
-      <div class="section-label">5 · 交通與行程關鍵提醒</div>
+      <!-- 4. 兩則短提醒 -->
+      <div class="section-label">4 · 交通與行程關鍵提醒</div>
       <div id="more-reminders" style="display:flex;flex-direction:column;gap:8px;"></div>
 
-      <!-- 6. 緊急聯絡 -->
-      <div class="section-label">6 · 緊急聯絡電話</div>
+      <!-- 5. 緊急聯絡 -->
+      <div class="section-label">5 · 緊急聯絡電話</div>
       <div id="more-emergency" class="card" style="display:flex;flex-direction:column;gap:8px;"></div>
 
-      <!-- 7. Supabase 雲端同步與唯讀診斷 -->
-      <div class="section-label">7 · SUPABASE 雲端同步與診斷</div>
+      <!-- 6. Supabase 雲端同步與唯讀診斷 -->
+      <div class="section-label">6 · SUPABASE 雲端同步與診斷</div>
       <div class="card">
         <div style="font-size:13px;font-weight:700;margin-bottom:4px;">雙人手機即時同步（已預設連接共用 Supabase）</div>
         <p style="font-size:12px;color:var(--sub);margin-bottom:8px;">
@@ -430,8 +334,8 @@
         </div>
       </div>
 
-      <!-- 8. 設定 -->
-      <div class="section-label">8 · 身份與匯率設定</div>
+      <!-- 7. 身份與匯率設定 -->
+      <div class="section-label">7 · 身份與匯率設定</div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <span style="font-size:13px;">目前這支手機的身份：<strong id="more-current-user" style="color:var(--accent);">未選擇</strong></span>
@@ -455,7 +359,7 @@
       <div class="eyebrow" style="margin-bottom:6px;">OSAKA TRIP · 2026.10.22–10.25</div>
       <h2 id="id-modal-title" style="font-size:17px;margin-bottom:6px;">請問這支手機是誰在使用？</h2>
       <p style="font-size:12.5px;color:var(--sub);margin-bottom:16px;">
-        選好後會鎖定在這支手機，方便記錄各自的行前打勾、打卡與記帳付款人。
+        選好後會鎖定在這支手機，方便記錄各自的行前打勾與記帳付款人（之後可在「更多」分頁查看或切換）。
       </p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <button type="button" class="btn-primary id-select-btn" data-member="老公" style="margin:0;padding:14px 10px;font-size:15px;">我是 老公</button>

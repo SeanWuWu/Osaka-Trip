@@ -1,11 +1,14 @@
-const CACHE_NAME = 'osaka-trip-2026-v3';
+const CACHE_NAME = 'osaka-trip-2026-v4';
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
   './data.js',
   './app.js',
-  './manifest.json'
+  './manifest.json',
+  './icon.png',
+  './apple-touch-icon.png',
+  './icon-192.png'
 ];
 
 self.addEventListener('install', (event) => {

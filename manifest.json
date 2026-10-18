@@ -4,14 +4,21 @@
   "description": "老公與老婆的大阪、USJ、天橋立、伊根舟屋 4天3夜隨身旅行手冊",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#FAF8F3",
-  "theme_color": "#FAF8F3",
+  "background_color": "#F2F7FA",
+  "theme_color": "#F2F7FA",
   "lang": "zh-Hant",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='24' fill='%23FAF8F3'/%3E%3Ccircle cx='60' cy='56' r='34' fill='%23B0432E' opacity='0.92'/%3E%3Cpath d='M26 86 Q60 72 94 86' stroke='%23C99A4B' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E",
+      "src": "./icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

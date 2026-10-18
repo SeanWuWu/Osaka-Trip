@@ -1,13 +1,15 @@
 :root {
-  --bg: #FAF8F3;
+  --bg: #F2F7FA;
   --card: #FFFFFF;
-  --line: #E8E2D6;
-  --text: #26211E;
-  --sub: #8A8177;
-  --muted: #B3AA9E;
-  --accent: #B0432E;
-  --gold: #C99A4B;
-  --green: #4A7C63;
+  --line: #D8E6F0;
+  --line2: #C2D6E6;
+  --text: #1C2D3D;
+  --sub: #5A7388;
+  --muted: #8FA6B8;
+  --accent: #2E6F95;
+  --accent-soft: #E4F0F7;
+  --gold: #C49A56;
+  --green: #3D7A6E;
 }
 
 * {
@@ -21,24 +23,26 @@ html, body {
   background-color: var(--bg);
   color: var(--text);
   font-family: "PingFang TC", "Hiragino Sans", "Noto Sans TC", "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.5;
   min-height: 100%;
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
 }
 
 .app-shell {
   max-width: 560px;
   margin: 0 auto;
-  padding: 16px 20px calc(82px + env(safe-area-inset-bottom, 0px)) 20px;
+  padding: 14px 18px calc(82px + env(safe-area-inset-bottom, 0px)) 18px;
 }
 
 /* 頂部同步狀態與提示條 */
 .sync-banner {
   background: var(--card);
   border: 1px solid var(--line);
-  border-left: 3px solid var(--gold);
-  border-radius: 4px;
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
   padding: 8px 12px;
   font-size: 12.5px;
   color: var(--text);
@@ -52,74 +56,92 @@ html, body {
   display: flex;
 }
 
-/* 3.1 頂部 Header */
+/* 3.1 頂部 Header（極簡海之京都風 + 右上角天氣與隱藏式換匯按鈕） */
 .top-header {
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
   margin-bottom: 12px;
 }
-.eyebrow-row {
+.headtop {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 4px;
+}
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
 }
 .eyebrow {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent);
+  margin-bottom: 2px;
+}
+.header-subtitle {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+}
+.header-cities {
+  font-size: 12px;
+  color: var(--sub);
+  letter-spacing: 0.02em;
+  margin-top: 6px;
 }
 .header-right-actions {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
-.identity-pill {
+.weather-btn, .fx-pill-btn {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 3px 8px;
+  border-radius: 6px;
+  padding: 5px 8px;
   font-size: 11.5px;
   color: var(--text);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.identity-pill strong {
-  color: var(--accent);
-}
-.weather-btn {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 3px 8px;
-  font-size: 11.5px;
-  color: var(--sub);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   white-space: nowrap;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
 }
-.header-subtitle {
-  font-size: 15px;
+.weather-btn.open, .fx-pill-btn.open {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.fx-pill-btn .fxp-rate {
   font-weight: 700;
-  color: var(--text);
-  margin-bottom: 3px;
 }
-.header-cities {
-  font-size: 12px;
-  color: var(--sub);
-  letter-spacing: 0.03em;
+.fx-pill-btn .fxp-hint {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 /* 天氣抽屜 */
 .weather-drawer {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 12px;
   margin-bottom: 12px;
   display: none;
@@ -135,7 +157,7 @@ html, body {
 }
 .weather-day-card {
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 8px 10px;
   background: var(--bg);
 }
@@ -150,13 +172,17 @@ html, body {
   margin-top: 2px;
 }
 
-/* 3.2 匯率條 */
+/* 3.2 隱藏式換匯抽屜（點擊右上角 換匯 ▾ 展開） */
 .fx-bar {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 10px 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+  display: none;
+}
+.fx-bar.open {
+  display: block;
 }
 .fx-top-row {
   display: flex;
@@ -172,21 +198,22 @@ html, body {
   align-items: center;
   background: var(--bg);
   border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 4px 8px;
+  border-radius: 5px;
+  padding: 5px 8px;
 }
 .fx-currency-label {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--sub);
   margin-right: 6px;
   white-space: nowrap;
+  font-weight: 600;
 }
 .fx-input {
   width: 100%;
   min-width: 0;
   border: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 16px; /* 16px 防止 iOS 手機點擊時自動放大畫面 */
   font-weight: 700;
   color: var(--text);
   outline: none;
@@ -197,8 +224,8 @@ html, body {
   flex-shrink: 0;
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 4px;
-  color: var(--text);
+  border-radius: 5px;
+  color: var(--accent);
   font-size: 13px;
   cursor: pointer;
   display: inline-flex;
@@ -221,7 +248,7 @@ html, body {
   background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 4px;
-  padding: 2px 7px;
+  padding: 3px 8px;
   font-size: 11.5px;
   color: var(--sub);
   cursor: pointer;
@@ -237,7 +264,7 @@ html, body {
 
 /* 區塊小標與通用元件 */
 .section-label {
-  font-size: 11px;
+  font-size: 11.5px;
   letter-spacing: 0.12em;
   color: var(--sub);
   font-weight: 600;
@@ -247,7 +274,7 @@ html, body {
 .card {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 12px;
 }
 
@@ -255,10 +282,10 @@ html, body {
 .add-trigger-btn {
   width: 100%;
   background: var(--card);
-  border: 1px dashed var(--muted);
-  border-radius: 4px;
+  border: 1px dashed var(--line2);
+  border-radius: 6px;
   padding: 11px 12px;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text);
   text-align: left;
@@ -282,7 +309,7 @@ html, body {
 .inline-form {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 14px 12px;
   margin-bottom: 14px;
   display: none;
@@ -295,7 +322,7 @@ html, body {
 }
 .form-label {
   display: block;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--text);
   margin-bottom: 5px;
@@ -304,19 +331,19 @@ html, body {
   width: 100%;
   background: var(--bg);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 5px;
   padding: 9px 10px;
-  font-size: 13.5px;
+  font-size: 16px; /* 16px 防止手機點擊輸入框時自動放大畫面 */
   color: var(--text);
   font-family: inherit;
   outline: none;
 }
 .form-input:focus, .form-select:focus, .form-textarea:focus {
-  border-color: var(--text);
+  border-color: var(--accent);
 }
 .form-error {
   font-size: 12px;
-  color: var(--accent);
+  color: #C2453A;
   margin-top: 5px;
   min-height: 18px;
 }
@@ -374,9 +401,9 @@ html, body {
   grid-template-columns: repeat(4, 1fr);
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 4px;
-  height: 48px;
-  margin-bottom: 10px;
+  border-radius: 6px;
+  height: 52px;
+  margin-bottom: 12px;
   position: sticky;
   top: 0;
   z-index: 30;
@@ -400,19 +427,21 @@ html, body {
 }
 .day-tab.active {
   color: var(--accent);
+  background: var(--accent-soft);
   border-bottom-color: var(--accent);
   font-weight: 700;
 }
 .day-tab.drag-over {
-  background: #F4ECE4;
+  background: var(--accent-soft);
   border-bottom-color: var(--accent);
 }
 .day-tab-top {
-  font-size: 12.5px;
-  line-height: 1.2;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.25;
 }
 .day-tab-sub {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--muted);
   line-height: 1.2;
 }
@@ -425,9 +454,9 @@ html, body {
   background: var(--card);
   border: 1px solid var(--line);
   border-left: 3px solid var(--accent);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 7px 10px;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text);
   margin-bottom: 10px;
   display: none;
@@ -436,23 +465,22 @@ html, body {
   display: block;
 }
 
-/* 時間表卡片列表 */
+/* 時間表卡片列表（放大字體、突顯時間、極簡右側控制項最大化文字區） */
 .tl-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   position: relative;
 }
 .tl-card {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 4px;
-  min-height: 84px;
-  padding: 10px 10px 10px 12px;
+  border-radius: 6px;
+  padding: 12px 8px 12px 13px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 6px;
   position: relative;
 }
 .tl-card.is-flight {
@@ -468,12 +496,12 @@ html, body {
   pointer-events: none;
   background: var(--card);
   border: 1px solid var(--accent);
-  border-radius: 4px;
-  padding: 10px 10px 10px 12px;
+  border-radius: 6px;
+  padding: 12px 8px 12px 13px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 6px;
   opacity: 0.94;
 }
 .tl-card-main {
@@ -484,52 +512,61 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 2px;
+  margin-bottom: 5px;
   flex-wrap: wrap;
 }
 .tl-time {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--accent);
-}
-.tl-flight-badge {
-  font-size: 10.5px;
-  color: var(--gold);
-  border: 1px solid var(--gold);
-  border-radius: 3px;
-  padding: 0 5px;
-  line-height: 1.4;
-}
-.tl-title {
   font-size: 14px;
   font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+.tl-flight-badge {
+  font-size: 11px;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  padding: 1px 6px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.tl-title {
+  font-size: 15.5px;
+  font-weight: 700;
   color: var(--text);
-  margin-bottom: 3px;
+  margin-bottom: 4px;
+  line-height: 1.38;
   word-break: break-word;
 }
 .tl-note {
-  font-size: 12.5px;
+  font-size: 13.5px;
   color: var(--sub);
+  line-height: 1.45;
   word-break: break-word;
 }
 
-/* 右側控制項（鉛筆、地圖釘、上下尖角、六點把手） */
+/* 極簡右側控制項（無外框方塊、緊湊排列，不擠壓左側文字空間） */
 .tl-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 1px;
   flex-shrink: 0;
+  margin-left: 2px;
 }
 .tl-icon-col {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 1px;
 }
 .tl-icon-btn {
-  width: 26px;
-  height: 26px;
-  background: var(--bg);
-  border: 1px solid var(--line);
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: none;
   border-radius: 4px;
   color: var(--sub);
   display: inline-flex;
@@ -540,15 +577,15 @@ html, body {
 }
 .tl-icon-btn:active {
   color: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 .tl-icon-btn:disabled {
-  opacity: 0.3;
+  opacity: 0.22;
   cursor: default;
 }
 .tl-drag-handle {
-  width: 26px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -579,7 +616,7 @@ html, body {
   padding: 0 10px;
   background: var(--bg);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 5px;
   color: var(--text);
 }
 .time-token-pills {
@@ -599,40 +636,9 @@ html, body {
 }
 .token-pill.active {
   border-color: var(--accent);
+  background: var(--accent-soft);
   color: var(--accent);
   font-weight: 700;
-}
-
-/* 當日路線手繪地圖區 */
-.route-map-card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 12px;
-}
-.route-svg-wrap {
-  width: 100%;
-  aspect-ratio: 7 / 9;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-.route-svg-wrap svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.route-summary-line {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-.route-jp-line {
-  font-size: 12px;
-  color: var(--sub);
 }
 
 /* M2 記帳 / 總花費統計 */
@@ -791,30 +797,8 @@ html, body {
   padding: 1px 6px;
   white-space: nowrap;
 }
-.checkin-dots {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 8px 0;
-}
-.checkin-dot {
-  border: 1px solid var(--line);
-  background: var(--bg);
-  color: var(--sub);
-  border-radius: 4px;
-  padding: 3px 8px;
-  font-size: 11.5px;
-  cursor: pointer;
-}
-.checkin-dot.done {
-  background: var(--green);
-  border-color: var(--green);
-  color: var(--card);
-  font-weight: 700;
-}
 .place-btn-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 8px;
   margin-top: 8px;
 }

@@ -371,15 +371,13 @@
     }
   };
 
-  // 3.1 頂部眉題與副標（依日本時間計算倒數）
+  // 3.1 頂部眉題與副標（依日本時間計算倒數，保持極簡乾淨）
   window.renderHeaderAndIdentity = function () {
     const eyebrowEl = document.getElementById('header-eyebrow');
     const subEl = document.getElementById('header-subtitle');
-    const userLabel = document.getElementById('current-user-label');
     const moreUserLabel = document.getElementById('more-current-user');
 
     const u = C.getUser();
-    if (userLabel) userLabel.textContent = u || '點此選身份';
     if (moreUserLabel) moreUserLabel.textContent = u || '尚未選擇';
 
     const nowJst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
@@ -389,23 +387,21 @@
     const diffDays = Math.round((startMidnight - todayMidnight) / 86400000);
 
     if (diffDays > 0) {
-      eyebrowEl.textContent = `JAPAN · OSAKA · D-${diffDays}`;
-      subEl.textContent = diffDays <= 7
-        ? `再過 ${diffDays} 天就要跟老婆出發去大阪、環球影城與海之京都囉！`
-        : `距離老公與老婆的大阪・天橋立・伊根秋日旅行還有 ${diffDays} 天`;
+      eyebrowEl.textContent = `OSAKA · KYOTO BY THE SEA · D-${diffDays}`;
+      subEl.textContent = `大阪・環球影城・海之京都四日旅`;
     } else if (todayMidnight >= startMidnight && todayMidnight <= endMidnight) {
       const dayNum = Math.round((todayMidnight - startMidnight) / 86400000) + 1;
-      eyebrowEl.textContent = `JAPAN · OSAKA · DAY ${dayNum}`;
+      eyebrowEl.textContent = `OSAKA · KYOTO BY THE SEA · DAY ${dayNum}`;
       const daySubtitles = [
-        'Day 1：順利抵達關西！放好行李去心齋橋逛街、晚上吃和牛燒肉',
-        'Day 2：日本環球影城一整天！瑪利歐、哈利波特與萬聖節之夜',
-        'Day 3：早起出發海之京都！丹後海上列車、天橋立與伊根舟屋餵海鷗',
-        'Day 4：中崎町老屋咖啡與梅田採買伴手禮，晚上平安飛回台灣'
+        'Day 1：抵達關西・難波・心齋橋・道頓堀',
+        'Day 2：日本環球影城 USJ 全日狂歡',
+        'Day 3：海之京都・丹後列車・天橋立・伊根舟屋',
+        'Day 4：中崎町老屋咖啡・梅田採買・平安返台'
       ];
       subEl.textContent = daySubtitles[dayNum - 1] || daySubtitles[0];
     } else {
-      eyebrowEl.textContent = 'OSAKA · AUTUMN 2026';
-      subEl.textContent = '那年秋天，我們一起走過道頓堀霓虹與伊根灣的海鷗';
+      eyebrowEl.textContent = 'OSAKA · KYOTO BY THE SEA · 2026';
+      subEl.textContent = '大阪・環球影城・海之京都四日旅';
     }
   };
 })();
@@ -542,6 +538,11 @@
     const rightIn = document.getElementById('fx-right-input');
     const pillsBox = document.getElementById('fx-quick-pills');
     const infoEl = document.getElementById('fx-rate-info');
+    const fxpRateEl = document.getElementById('fxp-rate');
+
+    if (fxpRateEl) {
+      fxpRateEl.textContent = `1 ¥ ≈ ${rate.toFixed(3)}$`;
+    }
 
     if (!leftIn || !rightIn) return;
     leftLabel.textContent = rev ? '台幣 $' : '日圓 ¥';
@@ -820,22 +821,22 @@
               <div class="tl-actions">
                 <div class="tl-icon-col">
                   <button type="button" class="tl-icon-btn tl-edit-btn" data-id="${it.id}" title="編輯行程" aria-label="編輯行程">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                   </button>
                   <a href="${mapUrl}" target="_blank" rel="noopener" class="tl-icon-btn" title="在 Google 地圖開啟" aria-label="開啟地圖">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                   </a>
                 </div>
                 <div class="tl-icon-col">
                   <button type="button" class="tl-icon-btn tl-up-btn" data-id="${it.id}" ${isFirstOfFirstDay ? 'disabled' : ''} title="往上移" aria-label="往上移">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="18 15 12 9 6 15"/></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="18 15 12 9 6 15"/></svg>
                   </button>
                   <button type="button" class="tl-icon-btn tl-down-btn" data-id="${it.id}" ${isLastOfLastDay ? 'disabled' : ''} title="往下移" aria-label="往下移">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
                   </button>
                 </div>
                 <div class="tl-drag-handle" tabindex="0" role="button" aria-label="按住六點拖曳排序" data-id="${it.id}">
-                  <svg width="14" height="16" viewBox="0 0 14 16" fill="currentColor">
+                  <svg width="11" height="14" viewBox="0 0 14 16" fill="currentColor">
                     <circle cx="4" cy="3" r="1.4"/><circle cx="10" cy="3" r="1.4"/>
                     <circle cx="4" cy="8" r="1.4"/><circle cx="10" cy="8" r="1.4"/>
                     <circle cx="4" cy="13" r="1.4"/><circle cx="10" cy="13" r="1.4"/>
@@ -870,17 +871,6 @@
         });
       }
     }
-
-    // 3. 手繪地圖路線透明度切換（選中那天 opacity=1，其他天 opacity=0.1）
-    const dMeta = daysMeta[dayIdx] || daysMeta[0];
-    for (let i = 0; i < daysMeta.length; i++) {
-      const layer = document.getElementById(`map-route-${i}`);
-      if (layer) layer.setAttribute('opacity', i === dayIdx ? '1' : '0.1');
-    }
-    const sumLine = document.getElementById('route-summary-line');
-    const jpLine = document.getElementById('route-jp-line');
-    if (sumLine) sumLine.textContent = dMeta.routeSummary || '路線還沒畫';
-    if (jpLine) jpLine.textContent = `地名對照：${dMeta.routeJpMap || '這格還沒填'}`;
   };
 
   // 六個點把手拖曳邏輯（手指移動 > 6px 才算拖；鎖住列表高度避免「當日路線」跳上來）
@@ -1173,7 +1163,6 @@
     FS.setOverwriteConfirm(false);
     setFormTimeValue('10:00');
     form.classList.add('open');
-    document.getElementById('tl-title-input').focus();
   };
 
   window.openTlFormForEdit = function (itemId) {
@@ -1574,7 +1563,6 @@
 
     const form = document.getElementById('exp-form');
     form.classList.add('open');
-    document.getElementById('exp-amount-input').focus();
   }
 
   window.initExpenseEvents = function () {
@@ -1611,7 +1599,6 @@
         renderSplitButtons();
         updateExpPreview();
         form.classList.add('open');
-        document.getElementById('exp-title-input').focus();
       });
     });
 
@@ -1717,12 +1704,6 @@
   const esc = window.__escapeHtml;
   const plDeleteStageMap = {};
 
-  function getLatestCheckinTime(pl) {
-    const chks = pl.checkins || {};
-    const times = Object.values(chks).map(Number).filter((n) => n > 0);
-    return times.length > 0 ? Math.max(...times) : 0;
-  }
-
   window.renderPlaces = function () {
     const st = C.getState();
     const tombstones = st.tombstones || {};
@@ -1749,33 +1730,26 @@
       });
     }
 
-    // 2. 篩選與三層排序（規格 M3：1.有人打過卡且最新打卡在上 2.未打卡但自己加的最新在上 3.手冊原本列好的維持原順序）
+    // 2. 篩選與排序（自己加的最新在上，手冊原本列好的維持原順序）
     const filtered = activeTag === '全部'
       ? places.slice()
       : places.filter((p) => (p.tags || []).includes(activeTag));
 
-    const tier1 = [];
-    const tier2 = [];
-    const tier3 = [];
+    const userAdded = [];
+    const handbookDefault = [];
     filtered.forEach((p) => {
-      const latestChk = getLatestCheckinTime(p);
-      if (latestChk > 0) tier1.push(p);
-      else if (p.who) tier2.push(p);
-      else tier3.push(p);
+      if (p.who) userAdded.push(p);
+      else handbookDefault.push(p);
     });
 
-    tier1.sort((a, b) => getLatestCheckinTime(b) - getLatestCheckinTime(a));
-    tier2.sort((a, b) => (b.upd || 0) - (a.upd || 0));
-    const finalOrdered = [...tier1, ...tier2, ...tier3];
+    userAdded.sort((a, b) => (b.upd || 0) - (a.upd || 0));
+    const finalOrdered = [...userAdded, ...handbookDefault];
 
     const listEl = document.getElementById('pl-list');
     const me = C.getUser();
     if (!listEl) return;
 
     listEl.innerHTML = finalOrdered.map((p) => {
-      const chks = p.checkins || {};
-      const iChecked = me && chks[me] > 0;
-      // 規格 M3 地圖：有 who 的店搜尋用 n，手冊店用 q
       const mapQuery = p.who ? p.n : (p.q || p.n);
       const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
       const delStage = plDeleteStageMap[p.id] || 0;
@@ -1787,24 +1761,14 @@
       return `
         <div class="place-card">
           <div class="place-top">
-            <div style="font-size:14px;font-weight:700;color:var(--text);">${esc(p.n)}</div>
+            <div style="font-size:15px;font-weight:700;color:var(--text);">${esc(p.n)}</div>
             <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
               ${(p.tags || []).map((t) => `<span class="place-tag">${esc(t)}</span>`).join('')}
             </div>
           </div>
-          <div style="font-size:12.5px;color:var(--sub);margin-bottom:6px;">${esc(p.note || '')}</div>
-          <div class="checkin-dots">
-            <span style="font-size:11.5px;color:var(--sub);">打卡狀態：</span>
-            ${['老公', '老婆'].map((m) => {
-              const done = chks[m] > 0;
-              return `<button type="button" class="checkin-dot ${done ? 'done' : ''}" data-pl-id="${p.id}" data-member="${m}">${done ? '✓ ' : '○ '}${m}</button>`;
-            }).join('')}
-          </div>
+          <div style="font-size:13px;color:var(--sub);margin-bottom:8px;">${esc(p.note || '')}</div>
           <div class="place-btn-row">
-            <a href="${mapUrl}" target="_blank" rel="noopener" class="btn-secondary" style="text-align:center;text-decoration:none;margin:0;">📍 查看店家</a>
-            <button type="button" class="btn-primary pl-checkin-btn" data-pl-id="${p.id}" style="margin:0;${iChecked ? 'background:var(--green);border-color:var(--green);' : ''}">
-              ${iChecked ? '✓ 已打卡（再按取消）' : '打卡'}
-            </button>
+            <a href="${mapUrl}" target="_blank" rel="noopener" class="btn-secondary" style="text-align:center;text-decoration:none;margin:0;width:100%;">📍 Google 地圖導航</a>
           </div>
           ${p.who ? `
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:11.5px;color:var(--sub);">
@@ -1815,20 +1779,6 @@
         </div>
       `;
     }).join('');
-
-    listEl.querySelectorAll('.pl-checkin-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const plId = btn.getAttribute('data-pl-id');
-        C.requireIdentity(() => togglePlaceCheckin(plId, C.getUser()));
-      });
-    });
-
-    listEl.querySelectorAll('.checkin-dot').forEach((dot) => {
-      dot.addEventListener('click', () => {
-        const plId = dot.getAttribute('data-pl-id');
-        C.requireIdentity(() => togglePlaceCheckin(plId, C.getUser()));
-      });
-    });
 
     listEl.querySelectorAll('.pl-del-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1852,31 +1802,11 @@
     });
   };
 
-  function togglePlaceCheckin(plId, memberName) {
-    if (!memberName) return;
-    const st = C.getState();
-    const pl = (st.places || []).find((x) => x.id === plId);
-    if (!pl) return;
-    if (!pl.checkins) pl.checkins = {};
-    if (pl.checkins[memberName] > 0) {
-      delete pl.checkins[memberName];
-    } else {
-      pl.checkins[memberName] = Date.now();
-    }
-    pl.upd = Date.now();
-    C.saveLocalState(true);
-    window.renderPlaces();
-    if (window.renderMoreSection) window.renderMoreSection();
-  }
-
   window.initPlaceEvents = function () {
     document.getElementById('pl-add-trigger').addEventListener('click', () => {
       C.requireIdentity(() => {
         const form = document.getElementById('pl-form');
         form.classList.toggle('open');
-        if (form.classList.contains('open')) {
-          document.getElementById('pl-name-input').focus();
-        }
       });
     });
 
@@ -2152,35 +2082,7 @@ create policy "Allow anon read write osaka_trip_sync"
       }
     }
 
-    // 3. 打卡王排行（並列就並列）
-    const lbEl = document.getElementById('more-leaderboard');
-    if (lbEl) {
-      const tombstones = st.tombstones || {};
-      const places = (st.places || []).filter((p) => !tombstones[p.id]);
-      let hCount = 0;
-      let wCount = 0;
-      places.forEach((p) => {
-        if (p.checkins && p.checkins['老公'] > 0) hCount++;
-        if (p.checkins && p.checkins['老婆'] > 0) wCount++;
-      });
-      let rankHtml = '';
-      if (hCount === wCount) {
-        rankHtml = `<div style="font-size:13.5px;font-weight:700;color:var(--accent);">🏆 並列第一：老公（${hCount} 處）＆ 老婆（${wCount} 處）</div>`;
-      } else if (hCount > wCount) {
-        rankHtml = `
-          <div style="font-size:13.5px;font-weight:700;color:var(--accent);">🥇 第 1 名：老公（已打卡 ${hCount} 處）</div>
-          <div style="font-size:12.5px;color:var(--sub);margin-top:4px;">🥈 第 2 名：老婆（已打卡 ${wCount} 處）</div>
-        `;
-      } else {
-        rankHtml = `
-          <div style="font-size:13.5px;font-weight:700;color:var(--accent);">🥇 第 1 名：老婆（已打卡 ${wCount} 處）</div>
-          <div style="font-size:12.5px;color:var(--sub);margin-top:4px;">🥈 第 2 名：老公（已打卡 ${hCount} 處）</div>
-        `;
-      }
-      lbEl.innerHTML = rankHtml;
-    }
-
-    // 5. 兩則短提醒
+    // 4. 兩則短提醒
     const remEl = document.getElementById('more-reminders');
     if (remEl) {
       remEl.innerHTML = window.HANDBOOK_DATA.reminders.map((r) => `
@@ -2192,7 +2094,7 @@ create policy "Allow anon read write osaka_trip_sync"
       `).join('');
     }
 
-    // 6. 緊急聯絡電話
+    // 5. 緊急聯絡電話
     const emEl = document.getElementById('more-emergency');
     if (emEl) {
       emEl.innerHTML = window.HANDBOOK_DATA.emergencyContacts.map((c) => `
@@ -2252,18 +2154,6 @@ create policy "Allow anon read write osaka_trip_sync"
       document.getElementById('sync-banner').classList.remove('show');
     });
 
-    // 頂部身份按鈕點選跳到更多設定
-    document.getElementById('identity-pill').addEventListener('click', () => {
-      if (!C.getUser()) {
-        document.getElementById('identity-modal').classList.add('open');
-      } else {
-        switchTab('more', true);
-        setTimeout(() => {
-          document.getElementById('switch-user-input').focus();
-        }, 100);
-      }
-    });
-
     // 全螢幕選身份
     document.querySelectorAll('.id-select-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -2276,20 +2166,59 @@ create policy "Allow anon read write osaka_trip_sync"
       });
     });
 
-    // 天氣抽屜
-    document.getElementById('weather-btn').addEventListener('click', () => {
-      const dr = document.getElementById('weather-drawer');
-      dr.classList.toggle('open');
-      if (dr.classList.contains('open')) window.fetchAndRenderWeather();
+    // 右上角天氣抽屜與隱藏式換匯抽屜（如同越南專案，點開一個時自動收合另一個）
+    const wxBtn = document.getElementById('weather-btn');
+    const wxDrawer = document.getElementById('weather-drawer');
+    const fxBtn = document.getElementById('fx-btn');
+    const fxDrawer = document.getElementById('fx-drawer');
+
+    wxBtn.addEventListener('click', () => {
+      const willOpen = !wxDrawer.classList.contains('open');
+      wxDrawer.classList.toggle('open', willOpen);
+      wxBtn.classList.toggle('open', willOpen);
+      wxBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      if (willOpen) {
+        fxDrawer.classList.remove('open');
+        fxBtn.classList.remove('open');
+        fxBtn.setAttribute('aria-expanded', 'false');
+        window.fetchAndRenderWeather();
+      }
     });
+
     document.getElementById('weather-close-btn').addEventListener('click', () => {
-      document.getElementById('weather-drawer').classList.remove('open');
+      wxDrawer.classList.remove('open');
+      wxBtn.classList.remove('open');
+      wxBtn.setAttribute('aria-expanded', 'false');
     });
+
     document.getElementById('more-open-weather-btn').addEventListener('click', () => {
-      const dr = document.getElementById('weather-drawer');
-      dr.classList.add('open');
+      wxDrawer.classList.add('open');
+      wxBtn.classList.add('open');
+      wxBtn.setAttribute('aria-expanded', 'true');
+      fxDrawer.classList.remove('open');
+      fxBtn.classList.remove('open');
+      fxBtn.setAttribute('aria-expanded', 'false');
       window.fetchAndRenderWeather();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    fxBtn.addEventListener('click', () => {
+      const willOpen = !fxDrawer.classList.contains('open');
+      fxDrawer.classList.toggle('open', willOpen);
+      fxBtn.classList.toggle('open', willOpen);
+      fxBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      if (willOpen) {
+        wxDrawer.classList.remove('open');
+        wxBtn.classList.remove('open');
+        wxBtn.setAttribute('aria-expanded', 'false');
+        window.renderFxBar();
+      }
+    });
+
+    document.getElementById('fx-close-btn').addEventListener('click', () => {
+      fxDrawer.classList.remove('open');
+      fxBtn.classList.remove('open');
+      fxBtn.setAttribute('aria-expanded', 'false');
     });
 
     // 匯率條事件
