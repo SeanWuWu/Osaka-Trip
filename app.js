@@ -329,14 +329,24 @@
         }])
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
+      if (window.updateSyncStatusUI) window.updateSyncStatusUI(true, '雲端已連線');
     } catch (err) {
+      if (window.updateSyncStatusUI) window.updateSyncStatusUI(false, '本機儲存中');
       C.showSyncBanner('雲端暫時無法連線，已安全保存在這支手機');
     }
+  };
+
+  window.updateSyncStatusUI = function (isOk, text) {
+    const dot = document.getElementById('sync-dot-live');
+    const txt = document.getElementById('sync-text-live');
+    if (dot) dot.classList.toggle('offline', !isOk);
+    if (txt && text) txt.textContent = text;
   };
 
   window.pullFromSupabaseAsync = async function (isDiagnosticOnly = false) {
     const cfg = getSupaConfig();
     if (!cfg.url || !cfg.key) {
+      if (window.updateSyncStatusUI) window.updateSyncStatusUI(false, '本機模式');
       return { ok: false, msg: '尚未設定 Supabase 網址與金鑰（目前為本機獨立儲存模式）' };
     }
     const safeRoom = (!cfg.room || cfg.room === 'main') ? DEFAULT_ROOM_ID : cfg.room;
@@ -351,8 +361,12 @@
         },
         cache: 'no-store'
       });
-      if (!res.ok) return { ok: false, msg: `雲端回應狀態碼 ${res.status}` };
+      if (!res.ok) {
+        if (window.updateSyncStatusUI) window.updateSyncStatusUI(false, '雲端回應異常');
+        return { ok: false, msg: `雲端回應狀態碼 ${res.status}` };
+      }
       const rows = await res.json();
+      if (window.updateSyncStatusUI) window.updateSyncStatusUI(true, '雲端已連線');
       if (isDiagnosticOnly) {
         if (!rows || rows.length === 0) {
           return { ok: true, msg: `唯讀診斷成功：Supabase (trip_store / id="${safeRoom}") 連線正常！雲端尚無大阪初始紀錄，未寫入任何資料，且與越南專案 (id="main") 100% 獨立隔離。` };
@@ -368,6 +382,7 @@
       }
       return { ok: true, msg: '已與雲端同步最新資料' };
     } catch (err) {
+      if (window.updateSyncStatusUI) window.updateSyncStatusUI(false, '本機離線中');
       return { ok: false, msg: '網路或雲端連線失敗，本機資料完好無損' };
     }
   };
@@ -831,6 +846,18 @@
     const title = String(it.title || '');
     const badges = [];
 
+    // 若使用者手動指定了標籤，優先依照指定標籤顯示
+    if (it.tag === '通勤') {
+      badges.push({ text: '通勤', cls: 'tl-commute-badge', cardCls: 'is-commute' });
+      return badges;
+    } else if (it.tag === '住宿') {
+      badges.push({ text: '住宿', cls: 'tl-hotel-badge', cardCls: 'is-hotel' });
+      return badges;
+    } else if (it.tag === '航班') {
+      badges.push({ text: '航班', cls: 'tl-flight-badge', cardCls: 'is-flight' });
+      return badges;
+    }
+
     const isFlight = !!it.flight || /航班|起飛|VZ566|GK057/.test(title);
     if (isFlight) {
       badges.push({ text: '航班', cls: 'tl-flight-badge', cardCls: 'is-flight' });
@@ -1213,18 +1240,57 @@
     return `${sh}:${sm}–${eh}:${em}`;
   }
 
+  let restoreDayTimer = null;
+  let restoreDayConfirm = false;
+
+  function resetRestoreDayBtn() {
+    restoreDayConfirm = false;
+    if (restoreDayTimer) {
+      clearTimeout(restoreDayTimer);
+      restoreDayTimer = null;
+    }
+    const btn = document.getElementById('tl-restore-day-btn');
+    if (btn) {
+      btn.textContent = '恢復本日預設行程';
+      btn.style.color = 'var(--sub)';
+      btn.style.fontWeight = 'normal';
+    }
+  }
+
+  function setTimelineTagPills(tag) {
+    const curTag = tag || '';
+    const inp = document.getElementById('tl-custom-tag');
+    if (inp) inp.value = curTag;
+    document.querySelectorAll('#tl-tag-pills .badge-tag-btn').forEach((b) => {
+      b.classList.toggle('active', b.getAttribute('data-tag') === curTag);
+    });
+  }
+
+  function openTlModal(isEdit, title) {
+    const backdrop = document.getElementById('tl-modal-backdrop');
+    const titleEl = document.getElementById('tl-modal-title');
+    if (titleEl) titleEl.textContent = title || (isEdit ? '✏️ 編輯行程' : '＋ 新增行程');
+    if (backdrop) backdrop.classList.add('open');
+  }
+
+  function closeTlModal() {
+    const backdrop = document.getElementById('tl-modal-backdrop');
+    if (backdrop) backdrop.classList.remove('open');
+    resetRestoreDayBtn();
+  }
+
   window.openTlFormForAdd = function () {
-    const form = document.getElementById('tl-form');
     document.getElementById('tl-edit-id').value = '';
     document.getElementById('tl-title-input').value = '';
     document.getElementById('tl-note-input').value = '';
     document.getElementById('tl-form-error').textContent = '';
     document.getElementById('tl-submit-btn').textContent = '儲存行程';
     document.getElementById('tl-delete-btn').style.display = 'none';
+    setTimelineTagPills('');
     FS.setDeleteConfirm(false);
     FS.setOverwriteConfirm(false);
     setFormTimeValue('10:00');
-    form.classList.add('open');
+    openTlModal(false, '＋ 新增行程');
   };
 
   window.openTlFormForEdit = function (itemId) {
@@ -1233,7 +1299,6 @@
     const item = items.find((x) => x.id === itemId && !x.movedAway);
     if (!item) return;
 
-    const form = document.getElementById('tl-form');
     document.getElementById('tl-edit-id').value = item.id;
     document.getElementById('tl-title-input').value = item.title;
     document.getElementById('tl-note-input').value = item.note || '';
@@ -1245,24 +1310,61 @@
     delBtn.textContent = '刪除此筆行程';
     delBtn.classList.remove('confirming');
 
+    setTimelineTagPills(item.tag || '');
     FS.setDeleteConfirm(false);
     FS.setOverwriteConfirm(false);
     setFormTimeValue(item.time);
-    form.classList.add('open');
-    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    openTlModal(true, '✏️ 編輯行程');
   };
 
   window.initTimelineFormEvents = function () {
     populateTimeWheels();
 
+    // 類型小膠囊切換（通勤、住宿、航班；未選則為一般）
+    document.querySelectorAll('#tl-tag-pills .badge-tag-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const clickedTag = btn.getAttribute('data-tag');
+        const curTag = document.getElementById('tl-custom-tag').value;
+        const nextTag = curTag === clickedTag ? '' : clickedTag;
+        setTimelineTagPills(nextTag);
+      });
+    });
+
+    // APA 飯店計程車卡彈窗
+    const hotelCardBtn = document.getElementById('hotel-taxi-card-btn');
+    const hotelBackdrop = document.getElementById('hotel-modal-backdrop');
+    const hotelCloseBtn = document.getElementById('hotel-modal-close');
+    const hotelCopyBtn = document.getElementById('hotel-copy-addr-btn');
+    if (hotelCardBtn && hotelBackdrop) {
+      hotelCardBtn.addEventListener('click', () => {
+        hotelBackdrop.classList.add('open');
+      });
+    }
+    if (hotelCloseBtn && hotelBackdrop) {
+      hotelCloseBtn.addEventListener('click', () => {
+        hotelBackdrop.classList.remove('open');
+      });
+    }
+    if (hotelBackdrop) {
+      hotelBackdrop.addEventListener('click', (e) => {
+        if (e.target === hotelBackdrop) hotelBackdrop.classList.remove('open');
+      });
+    }
+    if (hotelCopyBtn) {
+      hotelCopyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText('〒556-0017 大阪府大阪市浪速区湊町1丁目2-13');
+          C.showSyncBanner('✓ 已複製 APA 飯店日文地址到剪貼簿');
+        } catch (err) {
+          C.showSyncBanner('複製失敗，請手動複製');
+        }
+      });
+    }
+
+    // 新增行程彈窗按鈕
     document.getElementById('tl-add-trigger').addEventListener('click', () => {
       C.requireIdentity(() => {
-        const form = document.getElementById('tl-form');
-        if (form.classList.contains('open') && !document.getElementById('tl-edit-id').value) {
-          form.classList.remove('open');
-        } else {
-          window.openTlFormForAdd();
-        }
+        window.openTlFormForAdd();
       });
     });
 
@@ -1271,9 +1373,15 @@
       syncTimeFormUI();
     });
 
-    document.getElementById('tl-cancel-btn').addEventListener('click', () => {
-      document.getElementById('tl-form').classList.remove('open');
-    });
+    document.getElementById('tl-cancel-btn').addEventListener('click', closeTlModal);
+    const tlCloseBtn = document.getElementById('tl-modal-close');
+    if (tlCloseBtn) tlCloseBtn.addEventListener('click', closeTlModal);
+    const tlBackdrop = document.getElementById('tl-modal-backdrop');
+    if (tlBackdrop) {
+      tlBackdrop.addEventListener('click', (e) => {
+        if (e.target === tlBackdrop) closeTlModal();
+      });
+    }
 
     document.getElementById('tl-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -1282,6 +1390,7 @@
       const editId = document.getElementById('tl-edit-id').value;
       const title = document.getElementById('tl-title-input').value.trim();
       const note = document.getElementById('tl-note-input').value.trim();
+      const tag = document.getElementById('tl-custom-tag').value.trim();
       const errEl = document.getElementById('tl-form-error');
 
       if (!title) {
@@ -1316,6 +1425,7 @@
         item.time = timeStr;
         item.title = title;
         item.note = note;
+        item.tag = tag || undefined;
         if (!item.isHandbook) {
           item.q = title;
         } else if (title !== item.baseTitle) {
@@ -1332,6 +1442,7 @@
           title,
           baseTitle: title,
           note,
+          tag: tag || undefined,
           q: title,
           baseQ: title,
           flight: false,
@@ -1347,7 +1458,7 @@
       }
 
       C.saveLocalState(true);
-      document.getElementById('tl-form').classList.remove('open');
+      closeTlModal();
       window.renderTimeline();
       H.showTlStatus(editId ? `已更新「${title}」` : `已新增「${title}」`);
     });
@@ -1380,13 +1491,23 @@
         H.saveDayOrder(dayIdx, remaining);
         C.saveLocalState(true);
       }
-      document.getElementById('tl-form').classList.remove('open');
+      closeTlModal();
       window.renderTimeline();
       H.showTlStatus('已刪除該筆行程');
     });
 
-    // 恢復本日原行程
+    // 恢復本日原行程（兩段式防呆確認，4秒未確認自動回覆）
     document.getElementById('tl-restore-day-btn').addEventListener('click', () => {
+      const btn = document.getElementById('tl-restore-day-btn');
+      if (!restoreDayConfirm) {
+        restoreDayConfirm = true;
+        btn.textContent = '⚠️ 確定要覆蓋並恢復本日預設？（再按一次）';
+        btn.style.color = '#B0432E';
+        btn.style.fontWeight = '700';
+        restoreDayTimer = setTimeout(resetRestoreDayBtn, 4000);
+        return;
+      }
+      resetRestoreDayBtn();
       const dayIdx = C.getDayIdx();
       const dMeta = window.HANDBOOK_DATA.days[dayIdx];
       if (!dMeta) return;
@@ -1406,7 +1527,7 @@
       }));
       st.dayOrders[dayIdx] = dMeta.items.map((it) => it.id).join(',');
       C.saveLocalState(true);
-      document.getElementById('tl-form').classList.remove('open');
+      closeTlModal();
       window.renderTimeline();
       H.showTlStatus(`已恢復 ${dMeta.label} 預設行程`);
     });
@@ -1422,6 +1543,7 @@
   let expDeleteConfirm = false;
   let quickPayer = '老公';
   let quickCurr = 'JPY';
+  let expListExpanded = false;
 
   const DEFAULT_CAPSULES = [
     { icon: '🍜', name: '拉麵／正餐', cat: '美食', jpy: 2500, twd: 550, presetsJpy: [1200, 2000, 2500, 3500, 5000], presetsTwd: [250, 400, 550, 800, 1200] },
@@ -1620,7 +1742,10 @@
       return;
     }
 
-    listEl.innerHTML = sorted.map((ex) => {
+    const needCollapse = sorted.length > 10;
+    const displayList = (needCollapse && !expListExpanded) ? sorted.slice(0, 10) : sorted;
+
+    let itemsHtml = displayList.map((ex) => {
       const twd = toTwdInt(ex.amount, ex.currency);
       const isPendingZero = Number(ex.amount) === 0;
       const catColor = getCatColor(ex.category);
@@ -1630,12 +1755,20 @@
           ? `<div style="font-size:14px;font-weight:700;color:var(--text);">¥ ${Number(ex.amount).toLocaleString()}</div><div style="font-size:11.5px;color:var(--sub);">≈ NT$ ${twd.toLocaleString()}</div>`
           : `<div style="font-size:14px;font-weight:700;color:var(--text);">NT$ ${Number(ex.amount).toLocaleString()}</div>`;
 
+      const dt = ex.upd ? new Date(ex.upd) : null;
+      const timeStr = dt
+        ? `${dt.getMonth() + 1}/${dt.getDate()} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+        : '';
+
       return `
         <div class="exp-item-card" style="border-left:3px solid ${catColor};">
           <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap;">
-              <span style="font-size:11px;color:${catColor};border:1px solid ${catColor};border-radius:3px;padding:0 5px;">${esc(ex.category)}</span>
-              <span style="font-size:11.5px;color:var(--sub);">${esc(ex.payer)} 付款 · ${esc((ex.split || ['老公', '老婆']).join('、'))}</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;gap:6px;">
+              <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+                <span style="font-size:11px;color:${catColor};border:1px solid ${catColor};border-radius:3px;padding:0 5px;">${esc(ex.category)}</span>
+                <span style="font-size:11.5px;color:var(--sub);">${esc(ex.payer)} 付款 · ${esc((ex.split || ['老公', '老婆']).join('、'))}</span>
+              </div>
+              ${timeStr ? `<span style="font-size:11px;color:var(--muted);white-space:nowrap;">${timeStr}</span>` : ''}
             </div>
             <div style="font-size:14px;font-weight:700;color:var(--text);word-break:break-word;">${esc(ex.title)}</div>
             ${ex.note ? `<div style="font-size:12px;color:var(--sub);margin-top:2px;">${esc(ex.note)}</div>` : ''}
@@ -1649,6 +1782,24 @@
         </div>
       `;
     }).join('');
+
+    if (needCollapse) {
+      itemsHtml += `
+        <button type="button" id="exp-toggle-more-btn" class="exp-toggle-more-btn">
+          ${expListExpanded ? '收合帳目（只顯示最新 10 筆） ▴' : `展開其餘 ${sorted.length - 10} 筆帳目 ▾`}
+        </button>
+      `;
+    }
+
+    listEl.innerHTML = itemsHtml;
+
+    const toggleMoreBtn = document.getElementById('exp-toggle-more-btn');
+    if (toggleMoreBtn) {
+      toggleMoreBtn.addEventListener('click', () => {
+        expListExpanded = !expListExpanded;
+        window.renderExpenses();
+      });
+    }
 
     listEl.querySelectorAll('.exp-edit-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1921,6 +2072,11 @@
         if (!cap) return;
         const cur = document.getElementById('exp-currency-select').value;
         const amt = Math.max(0, Math.round(parseFloat(document.getElementById('exp-amount-input').value) || 0));
+        const titleVal = document.getElementById('exp-title-input').value.trim();
+        if (titleVal) {
+          const cleanedName = titleVal.replace(cap.icon, '').trim() || titleVal;
+          cap.name = cleanedName;
+        }
         if (cur === 'JPY') cap.jpy = amt;
         else cap.twd = amt;
         C.saveLocalState(true);
@@ -2028,8 +2184,52 @@
 // ==================== Part 6: M3 美食景點 與 M4 日文小卡 ====================
 (function () {
   const C = window.__APP_CORE;
+  const H = window.__TL_HELPERS;
   const esc = window.__escapeHtml;
   const plDeleteStageMap = {};
+  let plFormDeleteConfirm = false;
+
+  function openPlModal(isEdit, title) {
+    const backdrop = document.getElementById('pl-modal-backdrop');
+    const titleEl = document.getElementById('pl-modal-title');
+    if (titleEl) titleEl.textContent = title || (isEdit ? '✏️ 編輯口袋名單' : '＋ 收藏推薦店家／景點');
+    if (backdrop) backdrop.classList.add('open');
+  }
+
+  function closePlModal() {
+    const backdrop = document.getElementById('pl-modal-backdrop');
+    if (backdrop) backdrop.classList.remove('open');
+    plFormDeleteConfirm = false;
+  }
+
+  function openPlFormForAdd() {
+    document.getElementById('pl-edit-id').value = '';
+    document.getElementById('pl-name-input').value = '';
+    document.getElementById('pl-tag-input').value = '';
+    document.getElementById('pl-note-input').value = '';
+    document.getElementById('pl-form-error').textContent = '';
+    document.getElementById('pl-submit-btn').textContent = '加入口袋名單';
+    document.getElementById('pl-delete-btn').style.display = 'none';
+    openPlModal(false, '＋ 收藏推薦店家／景點');
+  }
+
+  function openPlFormForEdit(plId) {
+    const st = C.getState();
+    const p = (st.places || []).find((x) => x.id === plId);
+    if (!p) return;
+    document.getElementById('pl-edit-id').value = p.id;
+    document.getElementById('pl-name-input').value = p.n;
+    document.getElementById('pl-tag-input').value = (p.tags || []).join('、');
+    document.getElementById('pl-note-input').value = p.note || '';
+    document.getElementById('pl-form-error').textContent = '';
+    document.getElementById('pl-submit-btn').textContent = '儲存修改';
+    const delBtn = document.getElementById('pl-delete-btn');
+    delBtn.style.display = 'block';
+    delBtn.textContent = '刪除此景點';
+    delBtn.classList.remove('confirming');
+    plFormDeleteConfirm = false;
+    openPlModal(true, '✏️ 編輯景點／美食');
+  }
 
   window.renderPlaces = function () {
     const st = C.getState();
@@ -2094,8 +2294,10 @@
             </div>
           </div>
           <div style="font-size:13px;color:var(--sub);margin-bottom:8px;">${esc(p.note || '')}</div>
-          <div class="place-btn-row">
-            <a href="${mapUrl}" target="_blank" rel="noopener" class="btn-secondary" style="text-align:center;text-decoration:none;margin:0;width:100%;">📍 Google 地圖導航</a>
+          <div class="place-btn-row" style="display:grid;grid-template-columns:1fr auto auto;gap:6px;">
+            <a href="${mapUrl}" target="_blank" rel="noopener" class="btn-secondary" style="text-align:center;text-decoration:none;margin:0;padding:7px 10px;">📍 地圖導航</a>
+            <button type="button" class="btn-secondary pl-add-to-tl-btn" data-name="${esc(p.n)}" data-note="${esc(p.note || '')}" style="margin:0;padding:7px 10px;white-space:nowrap;">＋ 排入行程</button>
+            <button type="button" class="btn-secondary pl-edit-btn" data-pl-id="${p.id}" style="margin:0;padding:7px 10px;white-space:nowrap;">✏️ 編輯</button>
           </div>
           ${p.who ? `
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:11.5px;color:var(--sub);">
@@ -2107,6 +2309,31 @@
       `;
     }).join('');
 
+    // 綁定編輯
+    listEl.querySelectorAll('.pl-edit-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const plId = btn.getAttribute('data-pl-id');
+        C.requireIdentity(() => openPlFormForEdit(plId));
+      });
+    });
+
+    // 綁定＋排入行程
+    listEl.querySelectorAll('.pl-add-to-tl-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        C.requireIdentity(() => {
+          const name = btn.getAttribute('data-name');
+          const note = btn.getAttribute('data-note') || '';
+          document.getElementById('pl-to-tl-name').value = name;
+          document.getElementById('pl-to-tl-note').value = note;
+          document.getElementById('pl-to-tl-target-name').textContent = `景點／店家：${name}`;
+          document.getElementById('pl-to-tl-day').value = String(C.getDayIdx());
+          document.getElementById('pl-to-tl-time').value = '12:00';
+          document.getElementById('pl-to-tl-modal-backdrop').classList.add('open');
+        });
+      });
+    });
+
+    // 綁定刪除
     listEl.querySelectorAll('.pl-del-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const plId = btn.getAttribute('data-pl-id');
@@ -2131,19 +2358,46 @@
 
   window.initPlaceEvents = function () {
     document.getElementById('pl-add-trigger').addEventListener('click', () => {
-      C.requireIdentity(() => {
-        const form = document.getElementById('pl-form');
-        form.classList.toggle('open');
+      C.requireIdentity(() => openPlFormForAdd());
+    });
+
+    document.getElementById('pl-cancel-btn').addEventListener('click', closePlModal);
+    const plCloseBtn = document.getElementById('pl-modal-close');
+    if (plCloseBtn) plCloseBtn.addEventListener('click', closePlModal);
+    const plBackdrop = document.getElementById('pl-modal-backdrop');
+    if (plBackdrop) {
+      plBackdrop.addEventListener('click', (e) => {
+        if (e.target === plBackdrop) closePlModal();
       });
+    }
+
+    // 景點表單兩段式刪除
+    document.getElementById('pl-delete-btn').addEventListener('click', () => {
+      const editId = document.getElementById('pl-edit-id').value;
+      if (!editId) return;
+      const delBtn = document.getElementById('pl-delete-btn');
+      if (!plFormDeleteConfirm) {
+        plFormDeleteConfirm = true;
+        delBtn.textContent = '再按一次確定刪除';
+        delBtn.classList.add('confirming');
+        return;
+      }
+      plFormDeleteConfirm = false;
+      const st = C.getState();
+      st.places = (st.places || []).filter((x) => x.id !== editId);
+      st.tombstones[editId] = Date.now();
+      C.saveLocalState(true);
+      closePlModal();
+      window.renderPlaces();
+      if (window.renderMoreSection) window.renderMoreSection();
+      C.showSyncBanner('已刪除該筆景點');
     });
 
-    document.getElementById('pl-cancel-btn').addEventListener('click', () => {
-      document.getElementById('pl-form').classList.remove('open');
-    });
-
+    // 景點表單儲存
     document.getElementById('pl-form').addEventListener('submit', (e) => {
       e.preventDefault();
       if (!C.requireIdentity(() => {})) return;
+      const editId = document.getElementById('pl-edit-id').value;
       const n = document.getElementById('pl-name-input').value.trim();
       const tagRaw = document.getElementById('pl-tag-input').value.trim() || '推薦';
       const note = document.getElementById('pl-note-input').value.trim();
@@ -2160,32 +2414,101 @@
 
       const tags = tagRaw.split(/[、,，\s]+/).filter(Boolean);
       const st = C.getState();
-      st.places.push({
-        id: `pl-u-${Date.now().toString(36)}`,
-        n,
-        tags: tags.length > 0 ? tags : ['推薦'],
-        note: note || '口袋推薦名單',
-        q: n,
-        isHandbook: false,
-        who: C.getUser(),
-        checkins: {},
-        upd: Date.now()
-      });
+      if (editId) {
+        const p = (st.places || []).find((x) => x.id === editId);
+        if (p) {
+          p.n = n;
+          p.tags = tags.length > 0 ? tags : ['推薦'];
+          p.note = note || '';
+          p.who = p.who || C.getUser();
+          p.upd = Date.now();
+        }
+      } else {
+        st.places.push({
+          id: `pl-u-${Date.now().toString(36)}`,
+          n,
+          tags: tags.length > 0 ? tags : ['推薦'],
+          note: note || '口袋推薦名單',
+          q: n,
+          isHandbook: false,
+          who: C.getUser(),
+          checkins: {},
+          upd: Date.now()
+        });
+      }
       C.saveLocalState(true);
-      document.getElementById('pl-name-input').value = '';
-      document.getElementById('pl-tag-input').value = '';
-      document.getElementById('pl-note-input').value = '';
-      errEl.textContent = '';
-      document.getElementById('pl-form').classList.remove('open');
+      closePlModal();
       window.renderPlaces();
-      C.showSyncBanner(`已加入推薦店家「${n}」`);
+      C.showSyncBanner(editId ? `已更新景點「${n}」` : `已加入推薦景點「${n}」`);
     });
+
+    // 排入行程表單
+    const plToTlForm = document.getElementById('pl-to-tl-form');
+    if (plToTlForm) {
+      plToTlForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!C.requireIdentity(() => {})) return;
+        const targetDayIdx = parseInt(document.getElementById('pl-to-tl-day').value, 10);
+        const timeStr = document.getElementById('pl-to-tl-time').value.trim() || '12:00';
+        const name = document.getElementById('pl-to-tl-name').value;
+        const note = document.getElementById('pl-to-tl-note').value;
+        const st = C.getState();
+        const newItem = {
+          id: `tl-${Date.now().toString(36)}`,
+          time: timeStr,
+          title: name,
+          baseTitle: name,
+          note: note,
+          q: name,
+          baseQ: name,
+          flight: false,
+          isHandbook: false,
+          who: C.getUser(),
+          upd: Date.now()
+        };
+        st.daysMap[targetDayIdx] = st.daysMap[targetDayIdx] || [];
+        st.daysMap[targetDayIdx].push(newItem);
+        const ordered = H.getOrderedDayItems(targetDayIdx);
+        if (!ordered.some((x) => x.id === newItem.id)) ordered.push(newItem);
+        H.saveDayOrder(targetDayIdx, ordered);
+        C.saveLocalState(true);
+        document.getElementById('pl-to-tl-modal-backdrop').classList.remove('open');
+        C.setDayIdx(targetDayIdx);
+        document.querySelectorAll('.tab-pane').forEach((p) => {
+          p.classList.toggle('active', p.id === 'pane-tl');
+        });
+        document.querySelectorAll('.nav-tab').forEach((b) => {
+          b.classList.toggle('active', b.getAttribute('data-tab') === 'tl');
+        });
+        history.replaceState(null, '', '#tl');
+        window.renderTimeline();
+        H.showTlStatus(`已將「${name}」排入 Day ${targetDayIdx + 1}`);
+      });
+    }
+
+    const plToTlClose = document.getElementById('pl-to-tl-close');
+    const plToTlCancel = document.getElementById('pl-to-tl-cancel');
+    const plToTlBackdrop = document.getElementById('pl-to-tl-modal-backdrop');
+    if (plToTlClose && plToTlBackdrop) plToTlClose.addEventListener('click', () => plToTlBackdrop.classList.remove('open'));
+    if (plToTlCancel && plToTlBackdrop) plToTlCancel.addEventListener('click', () => plToTlBackdrop.classList.remove('open'));
+    if (plToTlBackdrop) {
+      plToTlBackdrop.addEventListener('click', (e) => {
+        if (e.target === plToTlBackdrop) plToTlBackdrop.classList.remove('open');
+      });
+    }
   };
 
   // ==================== M4 小卡 ====================
   window.renderPhraseCards = function () {
-    const cards = window.HANDBOOK_DATA.phraseCards || [];
+    const st = C.getState();
+    const customList = st.customPhrases || [];
+    const builtIn = window.HANDBOOK_DATA.phraseCards || [];
+    const cards = [...customList, ...builtIn];
+
     const cats = ['全部', '問候', '點餐', '購物', '交通', '住宿', '身體不適'];
+    customList.forEach((c) => {
+      if (c.cat && !cats.includes(c.cat)) cats.push(c.cat);
+    });
     const activeCat = C.getCardFilterCat();
 
     const pillsEl = document.getElementById('card-filter-pills');
@@ -2205,14 +2528,36 @@
     const listEl = document.getElementById('card-list');
     if (!listEl) return;
 
-    listEl.innerHTML = filtered.map((c) => `
-      <div class="phrase-card" data-card-id="${c.id}">
-        <div class="phrase-cat">${esc(c.cat)} · 點選放大給店員看</div>
-        <div class="phrase-jp">${esc(c.jp)}</div>
-        <div class="phrase-zh">${esc(c.zh)}</div>
-        <div class="phrase-pron">近似讀音：${esc(c.pron)}</div>
-      </div>
-    `).join('');
+    listEl.innerHTML = filtered.map((c) => {
+      const isCustom = c.id && c.id.startsWith('cphrase-');
+      return `
+        <div class="phrase-card" data-card-id="${c.id}">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <div class="phrase-cat">${esc(c.cat)} · 點選放大給店員看</div>
+            ${isCustom ? `<button type="button" class="chk-del-btn custom-phrase-del-btn" data-cphrase-id="${c.id}" title="刪除此小卡" aria-label="刪除此小卡">✕</button>` : ''}
+          </div>
+          <div class="phrase-jp">${esc(c.jp)}</div>
+          <div class="phrase-zh">${esc(c.zh)}</div>
+          <div class="phrase-pron">近似讀音：${esc(c.pron)}</div>
+          ${isCustom && c.who ? `<div style="font-size:11px;color:var(--muted);margin-top:4px;">由 ${esc(c.who)} 新增</div>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    // 刪除自訂小卡
+    listEl.querySelectorAll('.custom-phrase-del-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const cpId = btn.getAttribute('data-cphrase-id');
+        C.requireIdentity(() => {
+          const s = C.getState();
+          s.customPhrases = (s.customPhrases || []).filter((x) => x.id !== cpId);
+          C.saveLocalState(true);
+          window.renderPhraseCards();
+          C.showSyncBanner('已刪除自訂日文小卡');
+        });
+      });
+    });
 
     listEl.querySelectorAll('.phrase-card').forEach((el) => {
       el.addEventListener('click', () => {
@@ -2231,6 +2576,18 @@
   };
 
   window.initPhraseCardEvents = function () {
+    const phraseModal = document.getElementById('phrase-modal');
+    if (phraseModal) {
+      phraseModal.addEventListener('click', (e) => {
+        if (e.target === phraseModal) {
+          if (window.speechSynthesis) {
+            try { window.speechSynthesis.cancel(); } catch (err) {}
+          }
+          phraseModal.classList.remove('open');
+        }
+      });
+    }
+
     document.getElementById('zoom-close-btn').addEventListener('click', () => {
       if (window.speechSynthesis) {
         try { window.speechSynthesis.cancel(); } catch (e) {}
@@ -2272,6 +2629,69 @@
         fb.textContent = '請直接長按上方日文複製';
       }
     });
+
+    // 自訂日文小卡彈窗事件
+    const cardAddTrigger = document.getElementById('card-add-trigger');
+    const customCardBackdrop = document.getElementById('custom-card-modal-backdrop');
+    const customCardClose = document.getElementById('custom-card-modal-close');
+    const customCardCancel = document.getElementById('custom-card-cancel');
+    const customCardForm = document.getElementById('custom-card-form');
+
+    if (cardAddTrigger && customCardBackdrop) {
+      cardAddTrigger.addEventListener('click', () => {
+        C.requireIdentity(() => {
+          customCardBackdrop.classList.add('open');
+        });
+      });
+    }
+    if (customCardClose && customCardBackdrop) {
+      customCardClose.addEventListener('click', () => customCardBackdrop.classList.remove('open'));
+    }
+    if (customCardCancel && customCardBackdrop) {
+      customCardCancel.addEventListener('click', () => customCardBackdrop.classList.remove('open'));
+    }
+    if (customCardBackdrop) {
+      customCardBackdrop.addEventListener('click', (e) => {
+        if (e.target === customCardBackdrop) customCardBackdrop.classList.remove('open');
+      });
+    }
+
+    if (customCardForm) {
+      customCardForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!C.requireIdentity(() => {})) return;
+        const jp = document.getElementById('custom-card-jp').value.trim();
+        const zh = document.getElementById('custom-card-zh').value.trim();
+        const pron = document.getElementById('custom-card-pron').value.trim() || '—';
+        const cat = document.getElementById('custom-card-cat').value.trim() || '自訂';
+        const errEl = document.getElementById('custom-card-error');
+
+        if (!jp || !zh) {
+          errEl.textContent = '請填寫日文句子與中文意思';
+          return;
+        }
+
+        const st = C.getState();
+        if (!st.customPhrases) st.customPhrases = [];
+        st.customPhrases.unshift({
+          id: `cphrase-${Date.now().toString(36)}`,
+          jp,
+          zh,
+          pron,
+          cat,
+          who: C.getUser(),
+          upd: Date.now()
+        });
+        C.saveLocalState(true);
+        document.getElementById('custom-card-jp').value = '';
+        document.getElementById('custom-card-zh').value = '';
+        document.getElementById('custom-card-pron').value = '';
+        errEl.textContent = '';
+        customCardBackdrop.classList.remove('open');
+        window.renderPhraseCards();
+        C.showSyncBanner('✓ 已新增自訂日文小卡');
+      });
+    }
   };
 })();
 
@@ -2308,6 +2728,7 @@ create policy "Allow anon read write osaka_trip_sync"
         const count = (cb['老公'] ? 1 : 0) + (cb['老婆'] ? 1 : 0);
         totalChecks += count;
         const iChecked = me && cb[me];
+        const isCustom = item.id && item.id.startsWith('chk-');
         return `
           <div class="checklist-item">
             <div class="checklist-left" data-chk-id="${item.id}">
@@ -2319,6 +2740,7 @@ create policy "Allow anon read write osaka_trip_sync"
               <span>·</span>
               <span style="${cb['老婆'] ? 'color:var(--green);font-weight:700;' : ''}">老婆${cb['老婆'] ? '✓' : ''}</span>
               <span style="margin-left:2px;">(${count}/2)</span>
+              ${isCustom ? `<button type="button" class="chk-del-btn" data-del-id="${item.id}" title="刪除此項目" aria-label="刪除此項目">✕</button>` : ''}
             </div>
           </div>
         `;
@@ -2336,6 +2758,21 @@ create policy "Allow anon read write osaka_trip_sync"
             found.upd = Date.now();
             C.saveLocalState(true);
             window.renderMoreSection();
+          });
+        });
+      });
+
+      // 刪除自訂行前項目
+      chkListEl.querySelectorAll('.chk-del-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-del-id');
+          C.requireIdentity(() => {
+            const s = C.getState();
+            s.checklist = (s.checklist || []).filter((x) => x.id !== id);
+            C.saveLocalState(true);
+            window.renderMoreSection();
+            C.showSyncBanner('已刪除自訂行前項目');
           });
         });
       });
@@ -2549,17 +2986,55 @@ create policy "Allow anon read write osaka_trip_sync"
     });
 
     // 匯率條事件
-    document.getElementById('fx-left-input').addEventListener('input', () => {
-      window.renderFxBar();
-    });
+    const fxLeftInput = document.getElementById('fx-left-input');
+    if (fxLeftInput) {
+      fxLeftInput.addEventListener('focus', function () {
+        this.select();
+      });
+      fxLeftInput.addEventListener('input', () => {
+        window.renderFxBar();
+      });
+    }
+
+    const fxClearBtn = document.getElementById('fx-clear-btn');
+    if (fxClearBtn && fxLeftInput) {
+      fxClearBtn.addEventListener('click', () => {
+        fxLeftInput.value = '0';
+        window.renderFxBar();
+      });
+    }
+
     document.getElementById('fx-swap-btn').addEventListener('click', () => {
       const rev = !C.getFxReversed();
       C.setFxReversed(rev);
-      document.getElementById('fx-left-input').value = rev ? '1000' : '1000';
+      if (fxLeftInput) fxLeftInput.value = '1000';
       window.renderFxBar();
     });
     document.getElementById('refresh-fx-btn').addEventListener('click', () => {
       window.refreshExchangeRate(true);
+    });
+
+    // 頂部同步狀態點點擊快速診斷
+    const headerSyncStatusBtn = document.getElementById('header-sync-status');
+    if (headerSyncStatusBtn) {
+      headerSyncStatusBtn.addEventListener('click', async () => {
+        C.showSyncBanner('正在檢查 Supabase 雲端連線狀態...');
+        const res = await window.pullFromSupabaseAsync(true);
+        if (window.updateSyncStatusUI) window.updateSyncStatusUI(res.ok, res.ok ? '雲端已連線' : '本機離線中');
+        C.showSyncBanner(res.msg);
+      });
+    }
+
+    // 更多分頁可摺疊手風琴標題
+    document.querySelectorAll('.accordion-header').forEach((hdr) => {
+      hdr.addEventListener('click', () => {
+        const targetId = hdr.getAttribute('data-target');
+        const body = document.getElementById(targetId);
+        if (!body) return;
+        const isCollapsed = body.classList.contains('collapsed');
+        body.classList.toggle('collapsed', !isCollapsed);
+        hdr.classList.toggle('collapsed', !isCollapsed);
+      });
     });
 
     // M5 新增自訂行前項目
@@ -2669,22 +3144,63 @@ create policy "Allow anon read write osaka_trip_sync"
       }
     });
 
-    // 3.3 換人必須輸入對方名字防誤觸
-    document.getElementById('switch-user-btn').addEventListener('click', () => {
-      const val = document.getElementById('switch-user-input').value.trim();
-      const msgEl = document.getElementById('switch-user-msg');
-      if (val !== '老公' && val !== '老婆') {
-        msgEl.textContent = '請完整輸入「老公」或「老婆」才能切換身份';
-        return;
-      }
-      C.setUser(val);
-      document.getElementById('switch-user-input').value = '';
-      msgEl.textContent = '';
-      window.renderHeaderAndIdentity();
-      window.renderPlaces();
-      window.renderMoreSection();
-      C.showSyncBanner(`已切換這支手機的身份為：${val}`);
-    });
+    // 更多分頁：一鍵切換身份（老公 / 老婆）
+    const switchToHusbandBtn = document.getElementById('switch-to-husband-btn');
+    if (switchToHusbandBtn) {
+      switchToHusbandBtn.addEventListener('click', () => {
+        C.setUser('老公');
+        window.renderHeaderAndIdentity();
+        window.renderPlaces();
+        window.renderMoreSection();
+        C.showSyncBanner('已切換這支手機的身份為：老公');
+      });
+    }
+
+    const switchToWifeBtn = document.getElementById('switch-to-wife-btn');
+    if (switchToWifeBtn) {
+      switchToWifeBtn.addEventListener('click', () => {
+        C.setUser('老婆');
+        window.renderHeaderAndIdentity();
+        window.renderPlaces();
+        window.renderMoreSection();
+        C.showSyncBanner('已切換這支手機的身份為：老婆');
+      });
+    }
+
+    // 保留相容性文字切換
+    const switchUserBtn = document.getElementById('switch-user-btn');
+    if (switchUserBtn) {
+      switchUserBtn.addEventListener('click', () => {
+        const input = document.getElementById('switch-user-input');
+        if (!input) return;
+        const val = input.value.trim();
+        const msgEl = document.getElementById('switch-user-msg');
+        if (val !== '老公' && val !== '老婆') {
+          if (msgEl) msgEl.textContent = '請完整輸入「老公」或「老婆」才能切換身份';
+          return;
+        }
+        C.setUser(val);
+        input.value = '';
+        if (msgEl) msgEl.textContent = '';
+        window.renderHeaderAndIdentity();
+        window.renderPlaces();
+        window.renderMoreSection();
+        C.showSyncBanner(`已切換這支手機的身份為：${val}`);
+      });
+    }
+  }
+
+  // 旅遊期間自動跳轉至當日行程（10/22 ~ 10/25）
+  function autoSelectTripDay() {
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    const d = now.getDate();
+    if (m === 10) {
+      if (d === 22) C.setDayIdx(0);
+      else if (d === 23) C.setDayIdx(1);
+      else if (d === 24) C.setDayIdx(2);
+      else if (d === 25) C.setDayIdx(3);
+    }
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -2693,6 +3209,8 @@ create policy "Allow anon read write osaka_trip_sync"
     window.initPlaceEvents();
     window.initPhraseCardEvents();
     initGlobalEvents();
+
+    autoSelectTripDay();
 
     const initialHash = (window.location.hash || '#tl').replace('#', '');
     switchTab(initialHash, false);

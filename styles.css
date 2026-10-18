@@ -903,20 +903,23 @@ html, body {
   transform: scale(0.9);
 }
 
-/* 浮出式記帳微調／手動輸入視窗（不用往下滑，儲存或取消後自動消失） */
+/* 通用浮出式視窗（行程、記帳、美食、小卡、飯店地址均共用） */
+.app-modal-backdrop,
 .exp-modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 250;
-  background: rgba(20, 42, 60, 0.48);
+  background: rgba(20, 42, 60, 0.52);
   display: none;
   align-items: center;
   justify-content: center;
   padding: 16px 14px calc(20px + env(safe-area-inset-bottom, 0px)) 14px;
 }
+.app-modal-backdrop.open,
 .exp-modal-backdrop.open {
   display: flex;
 }
+.app-modal-sheet,
 .exp-modal-sheet {
   width: 100%;
   max-width: 480px;
@@ -928,7 +931,9 @@ html, body {
   padding: 14px;
   margin-bottom: 0;
   display: block;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
+.app-modal-head,
 .exp-modal-head {
   display: flex;
   align-items: center;
@@ -938,11 +943,13 @@ html, body {
   margin-bottom: 10px;
   border-bottom: 1px solid var(--line);
 }
+.app-modal-title,
 .exp-modal-title {
   font-size: 15px;
   font-weight: 700;
   color: var(--text);
 }
+.app-modal-close,
 .exp-modal-close {
   width: 30px;
   height: 30px;
@@ -957,6 +964,159 @@ html, body {
   align-items: center;
   justify-content: center;
   padding: 0;
+}
+
+/* 行程類型小膠囊（選填：通勤、住宿、航班，未選則為一般） */
+.badge-tag-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.badge-tag-btn {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 11px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--sub);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.badge-tag-btn.active[data-tag="通勤"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+.badge-tag-btn.active[data-tag="住宿"] {
+  background: rgba(47, 111, 94, 0.12);
+  border-color: var(--green);
+  color: var(--green);
+  font-weight: 700;
+}
+.badge-tag-btn.active[data-tag="航班"] {
+  background: rgba(154, 107, 36, 0.12);
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* APA 飯店計程車卡按鈕與內容樣式 */
+.hotel-taxi-pill {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.taxi-box {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.taxi-jp-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+  margin-bottom: 6px;
+}
+.taxi-jp-addr {
+  font-size: 14px;
+  color: var(--sub);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+.taxi-driver-phrase {
+  background: var(--card);
+  border-left: 3px solid var(--accent);
+  padding: 8px 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--accent);
+  border-radius: 4px;
+}
+
+/* 雲端同步即時狀態點（頂部） */
+.sync-status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--sub);
+  cursor: pointer;
+}
+.sync-dot-live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  display: inline-block;
+}
+.sync-dot-live.offline {
+  background: var(--sub);
+}
+
+/* 更多分頁可摺疊手風琴卡片 */
+.accordion-header {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+.accordion-arrow {
+  font-size: 11px;
+  color: var(--sub);
+  transition: transform 0.2s;
+}
+.accordion-header.collapsed .accordion-arrow {
+  transform: rotate(-90deg);
+}
+.accordion-body.collapsed {
+  display: none !important;
+}
+
+/* 帳目更多展開與清單刪除按鈕 */
+.exp-toggle-more-btn {
+  width: 100%;
+  padding: 9px;
+  text-align: center;
+  background: var(--card);
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+.chk-del-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.chk-del-btn:hover {
+  color: #B0432E;
 }
 
 /* My-Bank 滑桿與步進調價面板 */

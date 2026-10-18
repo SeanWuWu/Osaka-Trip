@@ -31,6 +31,10 @@
           </div>
         </div>
         <div class="header-right-actions">
+          <div id="header-sync-status" class="sync-status-indicator" title="點擊立即連線檢查">
+            <span id="sync-dot-live" class="sync-dot-live"></span>
+            <span id="sync-status-text">已連線</span>
+          </div>
           <button type="button" id="weather-btn" class="weather-btn" aria-expanded="false">
             <span>☀ 天氣</span>
           </button>
@@ -63,6 +67,7 @@
           <span id="fx-left-label" class="fx-currency-label">日圓 ¥</span>
           <input type="number" id="fx-left-input" class="fx-input" value="1000" inputmode="decimal" />
         </div>
+        <button type="button" id="fx-clear-btn" class="fx-swap-btn" title="清空金額" style="font-size:13px;font-weight:700;">⌫</button>
         <button type="button" id="fx-swap-btn" class="fx-swap-btn" title="對調日圓與台幣">⇄</button>
         <div class="fx-input-group">
           <span id="fx-right-label" class="fx-currency-label">台幣 $</span>
@@ -80,50 +85,73 @@
       <div id="day-tabs" class="day-tabs" role="tablist"></div>
       <div id="tl-status-bar" class="tl-status-bar" role="status"></div>
 
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+        <button type="button" id="hotel-taxi-card-btn" class="hotel-taxi-pill" style="margin-bottom:0;">
+          🚖 APA 飯店地址・計程車大字卡
+        </button>
+      </div>
+
       <button type="button" id="tl-add-trigger" class="add-trigger-btn tl-trigger">
         <span>＋ 新增這天的行程</span>
         <span style="font-size:11.5px;color:var(--sub);font-weight:400;">時間 · 地點 · 備註</span>
       </button>
 
-      <!-- 新增/編輯行程表單 -->
-      <form id="tl-form" class="inline-form" novalidate>
-        <input type="hidden" id="tl-edit-id" value="" />
-        <div class="form-field">
-          <label class="form-label">時間設定</label>
-          <div id="tl-token-pills" class="time-token-pills"></div>
-          <div id="tl-wheel-area">
-            <div class="wheel-group">
-              <select id="tl-start-hour" class="wheel-select" aria-label="開始小時"></select>
-              <span>:</span>
-              <select id="tl-start-min" class="wheel-select" aria-label="開始分鐘"></select>
-            </div>
-            <div id="tl-end-wheel-wrap" class="wheel-group" style="display:none;">
-              <span style="font-size:12px;color:var(--sub);white-space:nowrap;">至</span>
-              <select id="tl-end-hour" class="wheel-select" aria-label="結束小時"></select>
-              <span>:</span>
-              <select id="tl-end-min" class="wheel-select" aria-label="結束分鐘"></select>
-            </div>
-            <button type="button" id="tl-toggle-end-btn" class="btn-secondary" style="margin-bottom:4px;">＋ 加結束時間</button>
+      <!-- 浮出式新增/編輯行程表單（點鉛筆或新增時彈出，儲存後自動消失） -->
+      <div id="tl-modal-backdrop" class="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="tl-modal-title">
+        <form id="tl-form" class="app-modal-sheet" novalidate>
+          <div class="app-modal-head">
+            <span id="tl-modal-title" class="app-modal-title">＋ 新增行程</span>
+            <button type="button" id="tl-modal-close" class="app-modal-close" aria-label="關閉">✕</button>
           </div>
-          <div id="tl-token-preview" style="font-size:12px;color:var(--accent);font-weight:700;"></div>
-        </div>
+          <input type="hidden" id="tl-edit-id" value="" />
+          <input type="hidden" id="tl-custom-tag" value="" />
 
-        <div class="form-field">
-          <label class="form-label" for="tl-title-input">地點／事項</label>
-          <input type="text" id="tl-title-input" class="form-input" placeholder="貼上 Google 地圖的名稱" />
-        </div>
+          <div class="form-field">
+            <label class="form-label">活動類型（選填，未選則為一般）</label>
+            <div id="tl-tag-pills" class="badge-tag-pills">
+              <button type="button" class="badge-tag-btn" data-tag="通勤">🚇 通勤</button>
+              <button type="button" class="badge-tag-btn" data-tag="住宿">🏨 住宿</button>
+              <button type="button" class="badge-tag-btn" data-tag="航班">✈️ 航班</button>
+            </div>
+          </div>
 
-        <div class="form-field">
-          <label class="form-label" for="tl-note-input">備註（選填）</label>
-          <textarea id="tl-note-input" class="form-textarea" rows="2" placeholder="交通方式、預約時間或注意事項"></textarea>
-        </div>
+          <div class="form-field">
+            <label class="form-label">時間設定</label>
+            <div id="tl-token-pills" class="time-token-pills"></div>
+            <div id="tl-wheel-area">
+              <div class="wheel-group">
+                <select id="tl-start-hour" class="wheel-select" aria-label="開始小時"></select>
+                <span>:</span>
+                <select id="tl-start-min" class="wheel-select" aria-label="開始分鐘"></select>
+              </div>
+              <div id="tl-end-wheel-wrap" class="wheel-group" style="display:none;">
+                <span style="font-size:12px;color:var(--sub);white-space:nowrap;">至</span>
+                <select id="tl-end-hour" class="wheel-select" aria-label="結束小時"></select>
+                <span>:</span>
+                <select id="tl-end-min" class="wheel-select" aria-label="結束分鐘"></select>
+              </div>
+              <button type="button" id="tl-toggle-end-btn" class="btn-secondary" style="margin-bottom:4px;">＋ 加結束時間</button>
+            </div>
+            <div id="tl-token-preview" style="font-size:12px;color:var(--accent);font-weight:700;"></div>
+          </div>
 
-        <div id="tl-form-error" class="form-error"></div>
-        <button type="submit" id="tl-submit-btn" class="btn-primary">儲存行程</button>
-        <button type="button" id="tl-cancel-btn" class="btn-secondary">取消</button>
-        <button type="button" id="tl-delete-btn" class="btn-danger-outline" style="display:none;">刪除此筆行程</button>
-        <button type="button" id="tl-restore-day-btn" class="btn-secondary" style="margin-top:8px;color:var(--sub);">恢復本日預設行程</button>
-      </form>
+          <div class="form-field">
+            <label class="form-label" for="tl-title-input">地點／事項</label>
+            <input type="text" id="tl-title-input" class="form-input" placeholder="貼上 Google 地圖的名稱" />
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="tl-note-input">備註（選填）</label>
+            <textarea id="tl-note-input" class="form-textarea" rows="2" placeholder="交通方式、預約時間或注意事項"></textarea>
+          </div>
+
+          <div id="tl-form-error" class="form-error"></div>
+          <button type="submit" id="tl-submit-btn" class="btn-primary">儲存行程</button>
+          <button type="button" id="tl-cancel-btn" class="btn-secondary">取消</button>
+          <button type="button" id="tl-delete-btn" class="btn-danger-outline" style="display:none;">刪除此筆行程</button>
+          <button type="button" id="tl-restore-day-btn" class="btn-secondary" style="margin-top:8px;color:var(--sub);">恢復本日預設行程</button>
+        </form>
+      </div>
 
       <!-- 行程卡片清單 -->
       <div id="tl-list" class="tl-list"></div>
@@ -275,23 +303,33 @@
         <span style="font-size:11.5px;color:var(--sub);font-weight:400;">收藏口袋名單 · 隨時導航</span>
       </button>
 
-      <form id="pl-form" class="inline-form" novalidate>
-        <div class="form-field">
-          <label class="form-label" for="pl-name-input">店名／景點</label>
-          <input type="text" id="pl-name-input" class="form-input" placeholder="貼上 Google 地圖的店名" />
-        </div>
-        <div class="form-field">
-          <label class="form-label" for="pl-tag-input">分類</label>
-          <input type="text" id="pl-tag-input" class="form-input" placeholder="例如：燒肉、甜點、拉麵、逛街、景點" />
-        </div>
-        <div class="form-field">
-          <label class="form-label" for="pl-note-input">一句話特色</label>
-          <input type="text" id="pl-note-input" class="form-input" placeholder="例如：老婆想吃的千層蛋糕、必買伴手禮" />
-        </div>
-        <div id="pl-form-error" class="form-error"></div>
-        <button type="submit" class="btn-primary">加入口袋名單</button>
-        <button type="button" id="pl-cancel-btn" class="btn-secondary">取消</button>
-      </form>
+      <!-- 浮出式推薦店家/景點表單 -->
+      <div id="pl-modal-backdrop" class="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="pl-modal-title">
+        <form id="pl-form" class="app-modal-sheet" novalidate>
+          <div class="app-modal-head">
+            <span id="pl-modal-title" class="app-modal-title">＋ 收藏推薦店家／景點</span>
+            <button type="button" id="pl-modal-close" class="app-modal-close" aria-label="關閉">✕</button>
+          </div>
+          <input type="hidden" id="pl-edit-id" value="" />
+
+          <div class="form-field">
+            <label class="form-label" for="pl-name-input">店名／景點</label>
+            <input type="text" id="pl-name-input" class="form-input" placeholder="貼上 Google 地圖的店名" />
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="pl-tag-input">分類</label>
+            <input type="text" id="pl-tag-input" class="form-input" placeholder="例如：燒肉、甜點、拉麵、逛街、景點" />
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="pl-note-input">一句話特色</label>
+            <input type="text" id="pl-note-input" class="form-input" placeholder="例如：老婆想吃的千層蛋糕、必買伴手禮" />
+          </div>
+          <div id="pl-form-error" class="form-error"></div>
+          <button type="submit" id="pl-submit-btn" class="btn-primary">加入口袋名單</button>
+          <button type="button" id="pl-cancel-btn" class="btn-secondary">取消</button>
+          <button type="button" id="pl-delete-btn" class="btn-danger-outline" style="display:none;">刪除此景點</button>
+        </form>
+      </div>
 
       <div id="pl-list"></div>
     </section>
@@ -302,6 +340,41 @@
         點選任一張小卡可<strong>全螢幕放大給日本店員看</strong>，並支援日文語音朗讀與一鍵複製。讀音皆為台灣人好念的近似諧音。
       </div>
       <div id="card-filter-pills" class="filter-pills"></div>
+
+      <button type="button" id="card-add-trigger" class="add-trigger-btn pl-trigger" style="margin-bottom:12px;">
+        <span>＋ 新增自訂日文小卡</span>
+        <span style="font-size:11.5px;color:var(--sub);font-weight:400;">點餐 · 飲食偏好 · 旅程備忘</span>
+      </button>
+
+      <!-- 自訂小卡浮出式表單 -->
+      <div id="custom-card-modal-backdrop" class="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="custom-card-modal-title">
+        <form id="custom-card-form" class="app-modal-sheet" novalidate>
+          <div class="app-modal-head">
+            <span id="custom-card-modal-title" class="app-modal-title">＋ 新增自訂日文小卡</span>
+            <button type="button" id="custom-card-modal-close" class="app-modal-close" aria-label="關閉">✕</button>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="custom-card-jp">日文句子</label>
+            <input type="text" id="custom-card-jp" class="form-input" placeholder="例如：ネギ抜きでお願いします（麻煩不要加蔥）" />
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="custom-card-zh">中文意思</label>
+            <input type="text" id="custom-card-zh" class="form-input" placeholder="例如：麻煩不要加蔥，謝謝" />
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="custom-card-pron">發音／諧音（選填）</label>
+            <input type="text" id="custom-card-pron" class="form-input" placeholder="例如：內gi 奴ki 爹 歐內嘎以希媽斯" />
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="custom-card-cat">分類（選填）</label>
+            <input type="text" id="custom-card-cat" class="form-input" placeholder="例如：點餐、購物、備忘" value="自訂" />
+          </div>
+          <div id="custom-card-error" class="form-error"></div>
+          <button type="submit" class="btn-primary">儲存小卡</button>
+          <button type="button" id="custom-card-cancel" class="btn-secondary">取消</button>
+        </form>
+      </div>
+
       <div id="card-list" class="phrase-grid"></div>
     </section>
 
@@ -328,9 +401,12 @@
       <div class="section-label">2 · 實用官網與電子票券夾</div>
       <div id="more-links-wrap" class="card" style="display:flex;flex-direction:column;gap:8px;"></div>
 
-      <!-- 3. 天氣說明 -->
-      <div class="section-label">3 · 10月下旬大阪・海之京都氣候指南</div>
-      <div class="card">
+      <!-- 3. 天氣說明（可摺疊） -->
+      <div class="section-label accordion-header" data-target="more-wx-body">
+        <span>3 · 10月下旬大阪・海之京都氣候指南</span>
+        <span class="accordion-arrow">▾</span>
+      </div>
+      <div id="more-wx-body" class="card accordion-body collapsed">
         <div style="font-size:13.5px;font-weight:700;margin-bottom:4px;">大阪市區（難波・USJ・梅田）＆ 京都北部（天橋立・伊根）</div>
         <p style="font-size:12.5px;color:var(--sub);margin-bottom:8px;">
           10月下旬進入深秋，大阪市區白天舒適，早晚偏涼；Day 2 環球影城晚間萬聖節活動靠海港風大、Day 3 天橋立與伊根灣搭遊船海風較冷，建議採用「洋蔥式穿搭（薄長袖＋防風保暖外套）」。即時氣溫與降雨機率詳細請按右上角「☀ 天氣」。
@@ -338,17 +414,30 @@
         <button type="button" id="more-open-weather-btn" class="btn-secondary" style="margin:0;">查看右上角即時天氣預報</button>
       </div>
 
-      <!-- 4. 兩則短提醒 -->
-      <div class="section-label">4 · 交通與行程關鍵提醒</div>
-      <div id="more-reminders" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <!-- 4. 兩則短提醒（可摺疊） -->
+      <div class="section-label accordion-header" data-target="more-reminders-wrap">
+        <span>4 · 交通與行程關鍵提醒</span>
+        <span class="accordion-arrow">▾</span>
+      </div>
+      <div id="more-reminders-wrap" class="accordion-body collapsed" style="display:flex;flex-direction:column;gap:8px;">
+        <div id="more-reminders" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
 
-      <!-- 5. 緊急聯絡 -->
-      <div class="section-label">5 · 緊急聯絡電話</div>
-      <div id="more-emergency" class="card" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <!-- 5. 緊急聯絡（可摺疊） -->
+      <div class="section-label accordion-header" data-target="more-emergency-wrap">
+        <span>5 · 緊急聯絡電話</span>
+        <span class="accordion-arrow">▾</span>
+      </div>
+      <div id="more-emergency-wrap" class="card accordion-body collapsed" style="display:flex;flex-direction:column;gap:8px;">
+        <div id="more-emergency" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
 
-      <!-- 6. Supabase 雲端同步與唯讀診斷 -->
-      <div class="section-label">6 · SUPABASE 雲端同步與診斷</div>
-      <div class="card">
+      <!-- 6. Supabase 雲端同步與唯讀診斷（可摺疊） -->
+      <div class="section-label accordion-header" data-target="more-supa-wrap">
+        <span>6 · SUPABASE 雲端同步與診斷</span>
+        <span class="accordion-arrow">▾</span>
+      </div>
+      <div id="more-supa-wrap" class="card accordion-body collapsed">
         <div style="font-size:13px;font-weight:700;margin-bottom:4px;">雙人手機即時同步（已預設連接共用 Supabase）</div>
         <p style="font-size:12px;color:var(--sub);margin-bottom:8px;">
           已自動連通您的 Supabase 後台（資料表 <code>trip_store</code>，專屬隔離代號 <code>id="osaka_2026_couple"</code>），與越南專案（<code>id="main"</code>）100% 獨立互不干擾，打開即可雙向同步！
@@ -382,23 +471,70 @@
         </div>
       </div>
 
-      <!-- 7. 身份與匯率設定 -->
+      <!-- 7. 身份與匯率設定（一鍵切換，無須打字） -->
       <div class="section-label">7 · 身份與匯率設定</div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <span style="font-size:13px;">目前這支手機的身份：<strong id="more-current-user" style="color:var(--accent);">未選擇</strong></span>
         </div>
-        <div class="form-field" style="margin-bottom:8px;">
-          <label class="form-label" for="switch-user-input">若要換人，請輸入對方稱呼（老公 或 老婆）防誤觸：</label>
-          <div style="display:flex;gap:6px;">
-            <input type="text" id="switch-user-input" class="form-input" placeholder="輸入 老公 或 老婆" style="padding:7px 10px;" />
-            <button type="button" id="switch-user-btn" class="btn-secondary" style="width:auto;margin:0;white-space:nowrap;padding:7px 12px;">切換身份</button>
-          </div>
-          <div id="switch-user-msg" class="form-error"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <button type="button" id="switch-to-husband-btn" class="btn-secondary" style="margin:0;padding:10px;">切換為 老公</button>
+          <button type="button" id="switch-to-wife-btn" class="btn-secondary" style="margin:0;padding:10px;">切換為 老婆</button>
         </div>
+        <div id="switch-user-msg" class="form-error" style="margin-bottom:8px;"></div>
         <button type="button" id="refresh-fx-btn" class="btn-secondary" style="margin:0;">重新整理即時日圓匯率</button>
       </div>
     </section>
+  </div>
+
+  <!-- APA 飯店計程車大字卡浮出視窗 -->
+  <div id="hotel-modal-backdrop" class="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="hotel-modal-title">
+    <div class="app-modal-sheet" style="max-width:440px;">
+      <div class="app-modal-head">
+        <span id="hotel-modal-title" class="app-modal-title">🚖 APA 飯店計程車卡・地址導航</span>
+        <button type="button" id="hotel-modal-close" class="app-modal-close" aria-label="關閉">✕</button>
+      </div>
+      <div class="taxi-box">
+        <div style="font-size:11.5px;color:var(--sub);margin-bottom:3px;">飯店日文名稱：</div>
+        <div class="taxi-jp-name">アパホテル＆リゾート〈大阪なんば駅前タワー〉</div>
+        <div style="font-size:11.5px;color:var(--sub);margin-bottom:2px;">飯店日文地址：</div>
+        <div class="taxi-jp-addr" id="hotel-full-addr">〒556-0017 大阪府大阪市浪速区湊町1丁目2-13</div>
+        <div style="font-size:11.5px;color:var(--sub);margin-bottom:4px;">請直接出示這行給司機看：</div>
+        <div class="taxi-driver-phrase">「大阪なんばの湊町（JR難波駅前）のアパホテルタワーまでお願いします。」</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button type="button" id="hotel-copy-addr-btn" class="btn-primary" style="margin:0;">📋 複製日文地址</button>
+        <a href="https://www.google.com/maps/search/?api=1&query=%E3%82%A2%E3%83%91%E3%83%9B%E3%83%86%E3%83%AB%EF%BC%86%E3%83%AA%E3%82%BE%E3%83%BC%E3%83%88%20%E5%A4%A7%E9%98%AA%E3%81%AA%E3%82%93%E3%81%B0%E9%A7%85%E5%89%8D%E3%82%BF%E3%83%AF%E3%83%BC" target="_blank" rel="noopener" class="btn-secondary" style="margin:0;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">🗺️ 開啟 Google 地圖</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 口袋名單加入行程浮出視窗 -->
+  <div id="pl-to-tl-modal-backdrop" class="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="pl-to-tl-title">
+    <form id="pl-to-tl-form" class="app-modal-sheet" style="max-width:420px;" novalidate>
+      <div class="app-modal-head">
+        <span id="pl-to-tl-title" class="app-modal-title">＋ 將景點排入行程</span>
+        <button type="button" id="pl-to-tl-close" class="app-modal-close" aria-label="關閉">✕</button>
+      </div>
+      <input type="hidden" id="pl-to-tl-name" value="" />
+      <input type="hidden" id="pl-to-tl-note" value="" />
+      <div style="font-size:14.5px;font-weight:700;color:var(--text);margin-bottom:10px;" id="pl-to-tl-target-name"></div>
+      <div class="form-field">
+        <label class="form-label" for="pl-to-tl-day">選擇排在哪一天</label>
+        <select id="pl-to-tl-day" class="form-select">
+          <option value="0">Day 1 · 10/22 (四) 大阪難波・心齋橋</option>
+          <option value="1">Day 2 · 10/23 (五) 環球影城・難波</option>
+          <option value="2">Day 3 · 10/24 (六) 天橋立・伊根舟屋</option>
+          <option value="3">Day 4 · 10/25 (日) 中崎町・梅田</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="pl-to-tl-time">預計時間</label>
+        <input type="text" id="pl-to-tl-time" class="form-input" value="12:00" placeholder="例如：12:00 或 18:30" />
+      </div>
+      <button type="submit" class="btn-primary">排入時間表</button>
+      <button type="button" id="pl-to-tl-cancel" class="btn-secondary">取消</button>
+    </form>
   </div>
 
   <!-- 3.3 第一次開啟全螢幕選擇「我是誰」 -->
