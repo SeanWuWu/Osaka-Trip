@@ -34,7 +34,7 @@ html, body {
 .app-shell {
   max-width: 560px;
   margin: 0 auto;
-  padding: 14px 18px calc(82px + env(safe-area-inset-bottom, 0px)) 18px;
+  padding: max(38px, calc(env(safe-area-inset-top, 0px) + 26px)) 18px calc(86px + env(safe-area-inset-bottom, 0px)) 18px;
 }
 
 /* 頂部同步狀態與提示條 */
@@ -137,39 +137,129 @@ html, body {
   font-weight: 600;
 }
 
-/* 天氣抽屜 */
+/* 天氣抽屜（清晰逐日橫列清單） */
 .weather-drawer {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 6px;
-  padding: 12px;
+  padding: 12px 13px;
   margin-bottom: 12px;
   display: none;
 }
 .weather-drawer.open {
   display: block;
 }
-.weather-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+.wx-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  margin-top: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
 }
-.weather-day-card {
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 8px 10px;
-  background: var(--bg);
-}
-.weather-day-title {
-  font-size: 12px;
+.wx-title {
+  font-size: 13px;
   font-weight: 700;
   color: var(--text);
 }
-.weather-day-meta {
+.wx-badge {
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.wx-list {
+  display: flex;
+  flex-direction: column;
+}
+.wx-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 2px;
+  border-bottom: 1px dashed var(--line);
+}
+.wx-row:last-child {
+  border-bottom: none;
+}
+.wx-left {
+  min-width: 0;
+}
+.wx-day-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.wx-day-tag {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.wx-date-txt {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+.wx-loc-txt {
   font-size: 12px;
   color: var(--sub);
   margin-top: 2px;
+}
+.wx-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.wx-cond {
+  font-size: 12.5px;
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.wx-temp {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+.wx-pop {
+  font-size: 11.5px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.wx-foot {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--sub);
+}
+.wx-links {
+  display: flex;
+  gap: 10px;
+}
+.wx-links a {
+  color: var(--accent);
+  text-decoration: underline;
+  font-weight: 600;
 }
 
 /* 3.2 隱藏式換匯抽屜（點擊右上角 換匯 ▾ 展開） */
@@ -476,9 +566,9 @@ html, body {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 6px;
-  padding: 12px 8px 12px 13px;
+  padding: 11px 6px 11px 12px;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
   gap: 6px;
   position: relative;
@@ -497,9 +587,9 @@ html, body {
   background: var(--card);
   border: 1px solid var(--accent);
   border-radius: 6px;
-  padding: 12px 8px 12px 13px;
+  padding: 11px 6px 11px 12px;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
   gap: 6px;
   opacity: 0.94;
@@ -548,19 +638,16 @@ html, body {
   word-break: break-word;
 }
 
-/* 極簡右側控制項（無外框方塊、緊湊排列，不擠壓左側文字空間） */
+/* 極簡單排右側控制項（寬度僅 22px：右上修改、中間六點移動、右下地圖） */
 .tl-actions {
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  flex-shrink: 0;
-  margin-left: 2px;
-}
-.tl-icon-col {
+  width: 22px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  gap: 1px;
+  align-self: stretch;
+  flex-shrink: 0;
+  gap: 2px;
 }
 .tl-icon-btn {
   width: 22px;
@@ -574,18 +661,15 @@ html, body {
   justify-content: center;
   cursor: pointer;
   padding: 0;
+  text-decoration: none;
 }
 .tl-icon-btn:active {
   color: var(--accent);
   background: var(--accent-soft);
 }
-.tl-icon-btn:disabled {
-  opacity: 0.22;
-  cursor: default;
-}
 .tl-drag-handle {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -593,7 +677,7 @@ html, body {
   cursor: grab;
   touch-action: none;
   user-select: none;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 .tl-drag-handle:focus {
   outline: 1px solid var(--accent);
@@ -639,6 +723,251 @@ html, body {
   background: var(--accent-soft);
   color: var(--accent);
   font-weight: 700;
+}
+
+/* M2 記帳：My-Bank 閃電快速記帳區（置頂） */
+.quick-exp-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.quick-exp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.quick-exp-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.quick-exp-hint {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.quick-toggle-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.quick-seg {
+  display: inline-flex;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+.quick-seg-btn {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sub);
+  cursor: pointer;
+  font-family: inherit;
+}
+.quick-seg-btn.active {
+  background: var(--accent);
+  color: #FFFFFF;
+}
+.capsule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 8px;
+}
+.capsule-btn {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 7px 7px 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+.capsule-btn:active {
+  transform: scale(0.98);
+  border-color: var(--accent);
+}
+.cap-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  flex: 1;
+}
+.cap-icon {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.cap-info {
+  min-width: 0;
+}
+.cap-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cap-price {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 1px;
+}
+.zap-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(43, 108, 150, 0.25);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+.zap-btn:active {
+  background: var(--accent);
+  color: #FFFFFF;
+  transform: scale(0.9);
+}
+
+/* My-Bank 滑桿與步進調價面板 */
+.exp-live-price-box {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.exp-live-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.exp-live-num {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.exp-live-conv {
+  font-size: 12px;
+  color: var(--sub);
+  font-weight: 600;
+}
+.price-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 7px;
+  border-radius: 99px;
+  background: var(--line);
+  outline: none;
+  margin: 8px 0 10px;
+}
+.price-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #FFFFFF;
+  cursor: pointer;
+}
+.step-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.step-btn {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 6px 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+}
+.step-btn:active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.preset-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+.preset-chip {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--sub);
+  cursor: pointer;
+}
+.preset-chip.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.pin-default-btn {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+.floating-particle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #FFFFFF;
+  background: var(--accent);
+  padding: 5px 11px;
+  border-radius: 99px;
+  animation: floatUpFade 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes floatUpFade {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(0.9); }
+  100% { opacity: 0; transform: translate(-50%, -48px) scale(1.04); }
 }
 
 /* M2 記帳 / 總花費統計 */

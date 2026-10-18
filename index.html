@@ -129,59 +129,74 @@
       <div id="tl-list" class="tl-list"></div>
     </main>
 
-    <!-- ==================== M2 記帳（總花費統計與分類明細） ==================== -->
+    <!-- ==================== M2 記帳（置頂快速記帳 ＋ 總花費統計與分類明細） ==================== -->
     <section id="pane-exp" class="tab-pane">
-      <div class="exp-summary-card">
-        <div class="section-label" style="margin-top:0;">旅程總花費統計（折合台幣）</div>
-        <div class="exp-total-row">
-          <div>
-            <div id="exp-total-twd" class="exp-total-num">NT$ 0</div>
-            <div id="exp-total-sub" style="font-size:12px;color:var(--sub);">台幣小計 NT$ 0 ＋ 日圓小計 ¥0</div>
-          </div>
-          <button type="button" id="exp-reset-filter-btn" class="fx-pill" style="display:none;">顯示全部分類</button>
+      <!-- My-Bank 閃電快速記帳區（置頂） -->
+      <div class="quick-exp-card">
+        <div class="quick-exp-head">
+          <div class="quick-exp-title">⚡ 快速記帳（點選微調 · 點 ⚡ 一秒秒記）</div>
+          <div class="quick-exp-hint" id="quick-exp-status">預設使用對象：老公＋老婆</div>
         </div>
 
-        <div class="exp-payer-grid">
-          <div class="exp-payer-box">
-            <div class="exp-payer-name">老公 已付總額</div>
-            <div id="exp-paid-husband" class="exp-payer-val">NT$ 0</div>
+        <div class="quick-toggle-bar">
+          <div class="quick-seg" id="quick-payer-seg">
+            <button type="button" class="quick-seg-btn active" data-payer="老公">老公付款</button>
+            <button type="button" class="quick-seg-btn" data-payer="老婆">老婆付款</button>
           </div>
-          <div class="exp-payer-box">
-            <div class="exp-payer-name">老婆 已付總額</div>
-            <div id="exp-paid-wife" class="exp-payer-val">NT$ 0</div>
+          <div class="quick-seg" id="quick-curr-seg">
+            <button type="button" class="quick-seg-btn active" data-curr="JPY">日圓 ¥</button>
+            <button type="button" class="quick-seg-btn" data-curr="TWD">台幣 $</button>
           </div>
         </div>
 
-        <div class="section-label" style="margin:6px 0;">分類花費佔比與明細（點選可篩選）</div>
-        <div id="exp-cat-bar" class="exp-cat-bar"></div>
-        <div id="exp-cat-grid" class="exp-cat-grid"></div>
+        <!-- 6 顆旅遊常用膠囊 -->
+        <div id="exp-capsule-grid" class="capsule-grid"></div>
+
+        <button type="button" id="exp-add-trigger" class="add-trigger-btn exp-trigger" style="margin-bottom:0;">
+          <span>＋ 手動輸入／自訂記帳</span>
+          <span style="font-size:11.5px;color:var(--sub);font-weight:400;">滑桿微調 · 步進加減 · 分攤設定</span>
+        </button>
       </div>
 
-      <button type="button" id="exp-add-trigger" class="add-trigger-btn exp-trigger">
-        <span>＋ 記一筆帳</span>
-        <span style="font-size:11.5px;color:var(--sub);font-weight:400;">日圓 · 台幣 · 分類統計</span>
-      </button>
-
-      <!-- 新增/修改帳目表單 -->
+      <!-- 新增/微調帳目表單（My-Bank 滑桿＋步進微調＋精確輸入，置於統計卡上方） -->
       <form id="exp-form" class="inline-form" novalidate>
         <input type="hidden" id="exp-edit-id" value="" />
+        <input type="hidden" id="exp-capsule-idx" value="" />
+
         <div class="form-field">
           <label class="form-label" for="exp-title-input">項目名稱</label>
-          <input type="text" id="exp-title-input" class="form-input" placeholder="例如：松阪牛燒肉晚餐、南海電鐵車票" />
+          <input type="text" id="exp-title-input" class="form-input" placeholder="例如：一蘭拉麵、南海電鐵車票、大國藥妝" />
         </div>
 
-        <div class="form-field" style="display:grid;grid-template-columns:1fr 110px;gap:8px;">
-          <div>
-            <label class="form-label" for="exp-amount-input">金額（純數字）</label>
-            <input type="number" id="exp-amount-input" class="form-input" placeholder="0" inputmode="numeric" min="0" step="1" />
+        <!-- My-Bank 大字即時金額顯示 ＋ 滑桿 ＋ 步進按鈕 -->
+        <div class="exp-live-price-box">
+          <div class="exp-live-top">
+            <div>
+              <span id="exp-live-num" class="exp-live-num">¥ 2,500</span>
+              <span id="exp-live-conv" class="exp-live-conv">≈ NT$ 538</span>
+            </div>
+            <button type="button" id="exp-pin-default-btn" class="pin-default-btn" style="display:none;">📌 設為預設價</button>
           </div>
-          <div>
-            <label class="form-label" for="exp-currency-select">幣別</label>
+
+          <input type="range" id="exp-price-slider" class="price-slider" min="0" max="20000" step="100" value="2500" />
+
+          <div id="exp-step-row" class="step-row">
+            <button type="button" class="step-btn" data-step="-1000">-1000</button>
+            <button type="button" class="step-btn" data-step="-100">-100</button>
+            <button type="button" class="step-btn" data-step="100">+100</button>
+            <button type="button" class="step-btn" data-step="1000">+1000</button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 98px 72px;gap:6px;align-items:center;">
+            <input type="number" id="exp-amount-input" class="form-input" placeholder="直接輸入金額" inputmode="numeric" min="0" step="1" />
             <select id="exp-currency-select" class="form-select">
               <option value="JPY">日圓 ¥</option>
               <option value="TWD">台幣 $</option>
             </select>
+            <button type="button" id="exp-zero-btn" class="btn-secondary" style="margin-top:0;padding:10px 4px;font-size:12px;">⌫ 歸零</button>
           </div>
+
+          <div id="exp-preset-chips" class="preset-chips-row"></div>
         </div>
 
         <div class="form-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -210,10 +225,37 @@
         </div>
 
         <div id="exp-form-error" class="form-error"></div>
-        <button type="submit" id="exp-submit-btn" class="btn-primary">儲存這筆帳</button>
+        <button type="submit" id="exp-submit-btn" class="btn-primary">⚡ 儲存這筆帳</button>
         <button type="button" id="exp-cancel-btn" class="btn-secondary">取消</button>
         <button type="button" id="exp-delete-btn" class="btn-danger-outline" style="display:none;">刪除此筆帳目</button>
       </form>
+
+      <!-- 旅程總花費統計卡 -->
+      <div class="exp-summary-card">
+        <div class="section-label" style="margin-top:0;">旅程總花費統計（折合台幣）</div>
+        <div class="exp-total-row">
+          <div>
+            <div id="exp-total-twd" class="exp-total-num">NT$ 0</div>
+            <div id="exp-total-sub" style="font-size:12px;color:var(--sub);">台幣小計 NT$ 0 ＋ 日圓小計 ¥0</div>
+          </div>
+          <button type="button" id="exp-reset-filter-btn" class="fx-pill" style="display:none;">顯示全部分類</button>
+        </div>
+
+        <div class="exp-payer-grid">
+          <div class="exp-payer-box">
+            <div class="exp-payer-name">老公 已付總額</div>
+            <div id="exp-paid-husband" class="exp-payer-val">NT$ 0</div>
+          </div>
+          <div class="exp-payer-box">
+            <div class="exp-payer-name">老婆 已付總額</div>
+            <div id="exp-paid-wife" class="exp-payer-val">NT$ 0</div>
+          </div>
+        </div>
+
+        <div class="section-label" style="margin:6px 0;">分類花費佔比與明細（點選可篩選）</div>
+        <div id="exp-cat-bar" class="exp-cat-bar"></div>
+        <div id="exp-cat-grid" class="exp-cat-grid"></div>
+      </div>
 
       <div id="exp-list"></div>
     </section>

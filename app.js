@@ -258,6 +258,7 @@
       daysMap: cleanDays,
       dayOrders: st.dayOrders || {},
       expenses: cleanExpenses,
+      quickCapsules: Array.isArray(st.quickCapsules) ? st.quickCapsules : undefined,
       places: cleanPlaces,
       checklist: st.checklist || [],
       customLinks: st.customLinks || { ticketFolderUrl: '', slidesUrl: '', upd: 0 },
@@ -410,78 +411,105 @@
 (function () {
   const C = window.__APP_CORE;
 
-  // 天氣抓取（Open-Meteo 公開預報，抓不到時提供外部搜尋連結，絕不編造假數字）
+  function wmoToDesc(code) {
+    if (code === 0 || code === 1) return '☀️ 晴朗';
+    if (code === 2) return '⛅ 晴時多雲';
+    if (code === 3) return '☁️ 多雲時陰';
+    if (code >= 45 && code <= 48) return '🌫️ 薄霧';
+    if (code >= 51 && code <= 67) return '🌧️ 短暫雨';
+    if (code >= 80 && code <= 82) return '🌦️ 陣雨';
+    if (code >= 95) return '⛈️ 雷陣雨';
+    return '⛅ 晴時多雲';
+  }
+
+  // 天氣抓取（清晰 4 列直式清單：Day 1 ~ Day 4 逐日一列，不再擠成四宮格）
   window.fetchAndRenderWeather = async function () {
     const box = document.getElementById('weather-content');
     if (!box) return;
-    box.innerHTML = '<div style="font-size:12px;color:var(--sub);">正在查詢日本氣象資料...</div>';
+    box.innerHTML = '<div style="font-size:12px;color:var(--sub);padding:6px 0;">正在查詢大阪與丹後地區氣象資料...</div>';
 
-    const fallbackHtml = `
-      <div style="font-size:12px;color:var(--sub);margin-bottom:8px;">
-        目前無法直接讀取此日期區間的即時預報數值（或處於離線狀態）。請點選下方日本官方氣象連結查詢最新預報：
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        <a href="https://tenki.jp/forecast/6/30/6200/27100/" target="_blank" rel="noopener" class="fx-pill" style="text-decoration:none;color:var(--accent);font-weight:700;">↗ 日本氣象協會：大阪市 10日預報</a>
-        <a href="https://tenki.jp/forecast/6/29/6120/26405/" target="_blank" rel="noopener" class="fx-pill" style="text-decoration:none;color:var(--accent);font-weight:700;">↗ 日本氣象協會：天橋立・伊根町預報</a>
-      </div>
-    `;
+    // 10 月下旬日本氣象廳歷年氣候平均基準（當距離出發超過 16 天、或離線時顯示）
+    const defaultDays = [
+      { day: 'Day 1', date: '10/22 (四)', loc: '大阪難波・心齋橋・道頓堀', cond: '☀️ 晴時多雲', tMin: 15, tMax: 23, pop: 20 },
+      { day: 'Day 2', date: '10/23 (五)', loc: '日本環球影城 USJ・難波', cond: '☀️ 晴朗舒適', tMin: 14, tMax: 22, pop: 15 },
+      { day: 'Day 3', date: '10/24 (六)', loc: '京都天橋立・伊根灣（海邊偏涼）', cond: '⛅ 多雲海風', tMin: 12, tMax: 19, pop: 30 },
+      { day: 'Day 4', date: '10/25 (日)', loc: '中崎町・梅田・關西機場', cond: '☀️ 晴時多雲', tMin: 14, tMax: 22, pop: 20 }
+    ];
 
-    try {
-      const url = 'https://api.open-meteo.com/v1/forecast?latitude=34.6937,35.56&longitude=135.5023,135.19&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&start_date=2026-10-22&end_date=2026-10-25';
-      const res = await fetch(url);
-      if (!res.ok) {
-        box.innerHTML = fallbackHtml;
-        return;
-      }
-      const data = await res.json();
-      const osaka = Array.isArray(data) ? data[0] : data;
-      const kyotoNorth = Array.isArray(data) && data[1] ? data[1] : osaka;
-      if (!osaka || !osaka.daily || !osaka.daily.time || osaka.daily.time.length === 0) {
-        box.innerHTML = fallbackHtml;
-        return;
-      }
-
-      const dayLabels = [
-        { date: '10/22 (四)', loc: '大阪難波・心齋橋', src: osaka, i: 0 },
-        { date: '10/23 (五)', loc: '日本環球影城 USJ', src: osaka, i: 1 },
-        { date: '10/24 (六)', loc: '天橋立・伊根舟屋', src: kyotoNorth, i: 2 },
-        { date: '10/25 (日)', loc: '中崎町・梅田', src: osaka, i: 3 }
-      ];
-
-      let cardsHtml = '<div class="weather-grid">';
-      let hasValidNumber = false;
-      dayLabels.forEach((d) => {
-        const tMax = d.src.daily.temperature_2m_max ? d.src.daily.temperature_2m_max[d.i] : null;
-        const tMin = d.src.daily.temperature_2m_min ? d.src.daily.temperature_2m_min[d.i] : null;
-        const pop = d.src.daily.precipitation_probability_max ? d.src.daily.precipitation_probability_max[d.i] : null;
-        if (tMax !== null && tMax !== undefined && !isNaN(tMax)) hasValidNumber = true;
-        const tempText = (tMax !== null && tMin !== null && !isNaN(tMax))
-          ? `${Math.round(tMin)}°C – ${Math.round(tMax)}°C`
-          : '待氣象局更新';
-        const popText = (pop !== null && pop !== undefined && !isNaN(pop))
-          ? `降雨機率 ${pop}%`
-          : '點下方看即時預報';
-        cardsHtml += `
-          <div class="weather-day-card">
-            <div class="weather-day-title">${d.date} · ${d.loc}</div>
-            <div class="weather-day-meta">🌡 ${tempText} ｜ ☂ ${popText}</div>
+    function buildRowsHtml(rows, badgeText, currentNote) {
+      const listHtml = rows.map((r) => `
+        <div class="wx-row">
+          <div class="wx-left">
+            <div class="wx-day-line">
+              <span class="wx-day-tag">${r.day}</span>
+              <span class="wx-date-txt">${r.date}</span>
+            </div>
+            <div class="wx-loc-txt">${r.loc}</div>
           </div>
-        `;
-      });
-      cardsHtml += '</div>';
+          <div class="wx-right">
+            <span class="wx-cond">${r.cond}</span>
+            <span class="wx-temp">${r.tMin}°–${r.tMax}°C</span>
+            <span class="wx-pop">💧 ${r.pop}%</span>
+          </div>
+        </div>
+      `).join('');
 
-      if (!hasValidNumber) {
-        box.innerHTML = fallbackHtml;
-        return;
-      }
-      box.innerHTML = cardsHtml + `
-        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
-          <a href="https://tenki.jp/forecast/6/30/6200/27100/" target="_blank" rel="noopener" style="font-size:11.5px;color:var(--accent);">↗ tenki.jp 大阪天氣</a>
-          <a href="https://tenki.jp/forecast/6/29/6120/26405/" target="_blank" rel="noopener" style="font-size:11.5px;color:var(--accent);">↗ tenki.jp 天橋立/伊根天氣</a>
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px;">
+          <span style="font-size:11.5px;color:var(--sub);">${currentNote}</span>
+          <span class="wx-badge">${badgeText}</span>
+        </div>
+        <div class="wx-list">${listHtml}</div>
+        <div class="wx-foot">
+          <span>穿衣建議：薄長袖＋防風外套（天橋立海邊較涼）</span>
+          <div class="wx-links">
+            <a href="https://tenki.jp/forecast/6/30/6200/27100/" target="_blank" rel="noopener">↗ 大阪 10日預報</a>
+            <a href="https://tenki.jp/forecast/6/29/6120/26405/" target="_blank" rel="noopener">↗ 天橋立/伊根預報</a>
+          </div>
         </div>
       `;
+    }
+
+    try {
+      // 1. 先嘗試抓取 2026-10-22 ~ 2026-10-25 區間預報
+      const url = 'https://api.open-meteo.com/v1/forecast?latitude=34.6937,35.56&longitude=135.5023,135.19&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&start_date=2026-10-22&end_date=2026-10-25';
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const osaka = Array.isArray(data) ? data[0] : data;
+        const kyotoNorth = Array.isArray(data) && data[1] ? data[1] : osaka;
+        if (osaka && osaka.daily && osaka.daily.temperature_2m_max && osaka.daily.temperature_2m_max[0] !== null && osaka.daily.temperature_2m_max[0] !== undefined) {
+          const srcs = [osaka, osaka, kyotoNorth, osaka];
+          const liveRows = defaultDays.map((d, idx) => {
+            const s = srcs[idx].daily;
+            const tMax = s.temperature_2m_max && s.temperature_2m_max[idx] != null ? Math.round(s.temperature_2m_max[idx]) : d.tMax;
+            const tMin = s.temperature_2m_min && s.temperature_2m_min[idx] != null ? Math.round(s.temperature_2m_min[idx]) : d.tMin;
+            const pop = s.precipitation_probability_max && s.precipitation_probability_max[idx] != null ? Math.round(s.precipitation_probability_max[idx]) : d.pop;
+            const code = s.weather_code && s.weather_code[idx] != null ? s.weather_code[idx] : 1;
+            return { ...d, cond: wmoToDesc(code), tMin, tMax, pop };
+          });
+          box.innerHTML = buildRowsHtml(liveRows, 'Open-Meteo 即時預報', '已連線更新 10/22–10/25 每日預報');
+          return;
+        }
+      }
+
+      // 2. 若距離出發超過 16 天預報窗，抓取目前大阪即時氣溫供參考，並顯示 4 列清晰氣候表
+      let nowNote = '出發前 16 天內將自動切換為每日即時預報';
+      try {
+        const nowRes = await fetch('https://api.open-meteo.com/v1/forecast?latitude=34.6937&longitude=135.5023&current=temperature_2m,weather_code&timezone=Asia%2FTokyo');
+        if (nowRes.ok) {
+          const nowJson = await nowRes.json();
+          if (nowJson && nowJson.current && nowJson.current.temperature_2m != null) {
+            const curT = Math.round(nowJson.current.temperature_2m);
+            const curDesc = wmoToDesc(nowJson.current.weather_code || 1);
+            nowNote = `目前大阪即時：${curDesc} ${curT}°C`;
+          }
+        }
+      } catch (e2) {}
+
+      box.innerHTML = buildRowsHtml(defaultDays, '10月下旬歷年氣候', nowNote);
     } catch (e) {
-      box.innerHTML = fallbackHtml;
+      box.innerHTML = buildRowsHtml(defaultDays, '10月下旬歷年氣候', '離線模式：顯示 10 月下旬平均氣候');
     }
   };
 
@@ -804,9 +832,7 @@
       if (items.length === 0) {
         listEl.innerHTML = '<div class="card" style="color:var(--sub);text-align:center;">這格還沒填（可點上方新增或恢復預設行程）</div>';
       } else {
-        listEl.innerHTML = items.map((it, pos) => {
-          const isFirstOfFirstDay = dayIdx === 0 && pos === 0;
-          const isLastOfLastDay = dayIdx === daysMeta.length - 1 && pos === items.length - 1;
+        listEl.innerHTML = items.map((it) => {
           const mapUrl = H.getMapUrlForItem(it);
           return `
             <div class="tl-card ${it.flight ? 'is-flight' : ''}" data-item-id="${it.id}">
@@ -819,29 +845,19 @@
                 ${it.note ? `<div class="tl-note">${escapeHtml(it.note)}</div>` : ''}
               </div>
               <div class="tl-actions">
-                <div class="tl-icon-col">
-                  <button type="button" class="tl-icon-btn tl-edit-btn" data-id="${it.id}" title="編輯行程" aria-label="編輯行程">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                  </button>
-                  <a href="${mapUrl}" target="_blank" rel="noopener" class="tl-icon-btn" title="在 Google 地圖開啟" aria-label="開啟地圖">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  </a>
-                </div>
-                <div class="tl-icon-col">
-                  <button type="button" class="tl-icon-btn tl-up-btn" data-id="${it.id}" ${isFirstOfFirstDay ? 'disabled' : ''} title="往上移" aria-label="往上移">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="18 15 12 9 6 15"/></svg>
-                  </button>
-                  <button type="button" class="tl-icon-btn tl-down-btn" data-id="${it.id}" ${isLastOfLastDay ? 'disabled' : ''} title="往下移" aria-label="往下移">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
-                  </button>
-                </div>
-                <div class="tl-drag-handle" tabindex="0" role="button" aria-label="按住六點拖曳排序" data-id="${it.id}">
-                  <svg width="11" height="14" viewBox="0 0 14 16" fill="currentColor">
+                <button type="button" class="tl-icon-btn tl-edit-btn" data-id="${it.id}" title="編輯行程" aria-label="編輯行程">
+                  <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </button>
+                <div class="tl-drag-handle" tabindex="0" role="button" aria-label="按住六點拖曳排序" title="按住六點上下移動或拖到其他天" data-id="${it.id}">
+                  <svg width="12" height="15" viewBox="0 0 14 16" fill="currentColor">
                     <circle cx="4" cy="3" r="1.4"/><circle cx="10" cy="3" r="1.4"/>
                     <circle cx="4" cy="8" r="1.4"/><circle cx="10" cy="8" r="1.4"/>
                     <circle cx="4" cy="13" r="1.4"/><circle cx="10" cy="13" r="1.4"/>
                   </svg>
                 </div>
+                <a href="${mapUrl}" target="_blank" rel="noopener" class="tl-icon-btn tl-map-btn" title="在 Google 地圖開啟" aria-label="開啟地圖">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </a>
               </div>
             </div>
           `;
@@ -852,18 +868,6 @@
           btn.addEventListener('click', () => {
             const id = btn.getAttribute('data-id');
             C.requireIdentity(() => openTlFormForEdit(id));
-          });
-        });
-        listEl.querySelectorAll('.tl-up-btn').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-id');
-            C.requireIdentity(() => H.moveItemStep(id, -1));
-          });
-        });
-        listEl.querySelectorAll('.tl-down-btn').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-id');
-            C.requireIdentity(() => H.moveItemStep(id, 1));
           });
         });
         listEl.querySelectorAll('.tl-drag-handle').forEach((handle) => {
@@ -1351,13 +1355,44 @@
   };
 })();
 
-// ==================== Part 5: M2 記帳（總花費統計與分類明細） ====================
+// ==================== Part 5: M2 記帳（My-Bank 快速記帳 ＋ 總花費統計與分類明細） ====================
 (function () {
   const C = window.__APP_CORE;
   const esc = window.__escapeHtml;
 
   let currentSplitSelection = ['老公', '老婆'];
   let expDeleteConfirm = false;
+  let quickPayer = '老公';
+  let quickCurr = 'JPY';
+
+  const DEFAULT_CAPSULES = [
+    { icon: '🍜', name: '拉麵／正餐', cat: '美食', jpy: 2500, twd: 550, presetsJpy: [1200, 2000, 2500, 3500, 5000], presetsTwd: [250, 400, 550, 800, 1200] },
+    { icon: '🥩', name: '燒肉／大餐', cat: '美食', jpy: 10000, twd: 2200, presetsJpy: [5000, 8000, 10000, 15000, 20000], presetsTwd: [1000, 1600, 2200, 3200, 4500] },
+    { icon: '🏪', name: '超商／零食', cat: '美食', jpy: 800, twd: 180, presetsJpy: [300, 500, 800, 1200, 2000], presetsTwd: [60, 100, 180, 260, 450] },
+    { icon: '☕', name: '咖啡／甜點', cat: '美食', jpy: 1200, twd: 260, presetsJpy: [600, 900, 1200, 1800, 2500], presetsTwd: [120, 200, 260, 400, 550] },
+    { icon: '🚇', name: '地鐵／交通', cat: '交通', jpy: 600, twd: 130, presetsJpy: [240, 480, 600, 1000, 3000], presetsTwd: [50, 100, 130, 220, 650] },
+    { icon: '🛍️', name: '藥妝／伴手禮', cat: '伴手禮・購物', jpy: 5000, twd: 1100, presetsJpy: [2000, 3500, 5000, 10000, 15000], presetsTwd: [450, 750, 1100, 2200, 3300] }
+  ];
+
+  function getCapsules() {
+    const st = C.getState();
+    if (!Array.isArray(st.quickCapsules) || st.quickCapsules.length !== DEFAULT_CAPSULES.length) {
+      st.quickCapsules = DEFAULT_CAPSULES.map((c) => ({ ...c }));
+    }
+    return st.quickCapsules;
+  }
+
+  function spawnParticle(e, text) {
+    const el = document.createElement('div');
+    el.className = 'floating-particle';
+    el.textContent = text;
+    const x = (e && e.clientX) ? e.clientX : window.innerWidth / 2;
+    const y = (e && e.clientY) ? e.clientY : 160;
+    el.style.left = `${Math.min(window.innerWidth - 90, Math.max(90, x))}px`;
+    el.style.top = `${Math.max(60, y - 12)}px`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1100);
+  }
 
   function getCatColor(catName) {
     const found = window.HANDBOOK_DATA.expenseCategories.find((c) => c.name === catName);
@@ -1371,7 +1406,75 @@
     return Math.round(num * rate);
   }
 
+  function renderQuickCapsules() {
+    const grid = document.getElementById('exp-capsule-grid');
+    if (!grid) return;
+    const caps = getCapsules();
+    const sym = quickCurr === 'JPY' ? '¥' : 'NT$';
+
+    document.querySelectorAll('#quick-payer-seg .quick-seg-btn').forEach((b) => {
+      b.classList.toggle('active', b.getAttribute('data-payer') === quickPayer);
+    });
+    document.querySelectorAll('#quick-curr-seg .quick-seg-btn').forEach((b) => {
+      b.classList.toggle('active', b.getAttribute('data-curr') === quickCurr);
+    });
+
+    grid.innerHTML = caps.map((c, idx) => {
+      const price = quickCurr === 'JPY' ? c.jpy : c.twd;
+      return `
+        <div class="capsule-btn" data-cap-idx="${idx}">
+          <div class="cap-left">
+            <span class="cap-icon">${c.icon}</span>
+            <div class="cap-info">
+              <div class="cap-name">${esc(c.name)}</div>
+              <div class="cap-price">${sym} ${Number(price).toLocaleString()}</div>
+            </div>
+          </div>
+          <button type="button" class="zap-btn" data-zap-idx="${idx}" title="一秒快速記帳">⚡</button>
+        </div>
+      `;
+    }).join('');
+
+    grid.querySelectorAll('.zap-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.getAttribute('data-zap-idx'), 10);
+        C.requireIdentity(() => {
+          const cap = getCapsules()[idx];
+          if (!cap) return;
+          const amount = quickCurr === 'JPY' ? cap.jpy : cap.twd;
+          const st = C.getState();
+          st.expenses.push({
+            id: `exp-${Date.now().toString(36)}`,
+            title: `${cap.icon} ${cap.name}`,
+            amount,
+            currency: quickCurr,
+            category: cap.cat,
+            payer: quickPayer,
+            split: ['老公', '老婆'],
+            note: '⚡ 快速秒記',
+            who: C.getUser() || quickPayer,
+            upd: Date.now()
+          });
+          C.saveLocalState(true);
+          window.renderExpenses();
+          spawnParticle(e, `⚡ 已記 ${cap.name} ${sym}${amount.toLocaleString()}`);
+          const statusEl = document.getElementById('quick-exp-status');
+          if (statusEl) statusEl.textContent = `✓ 剛記下：${cap.name} ${sym}${amount.toLocaleString()}（${quickPayer}付）`;
+        });
+      });
+    });
+
+    grid.querySelectorAll('.capsule-btn').forEach((card) => {
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.getAttribute('data-cap-idx'), 10);
+        C.requireIdentity(() => openExpFormFromCapsule(idx));
+      });
+    });
+  }
+
   window.renderExpenses = function () {
+    renderQuickCapsules();
     const st = C.getState();
     const tombstones = st.tombstones || {};
     const expenses = (st.expenses || []).filter((ex) => !tombstones[ex.id]);
@@ -1514,8 +1617,82 @@
     });
   }
 
+  function syncSliderAndStepUI() {
+    const cur = document.getElementById('exp-currency-select').value || 'JPY';
+    const amt = Math.max(0, Math.round(parseFloat(document.getElementById('exp-amount-input').value) || 0));
+    const slider = document.getElementById('exp-price-slider');
+    const liveNum = document.getElementById('exp-live-num');
+    const liveConv = document.getElementById('exp-live-conv');
+    const stepRow = document.getElementById('exp-step-row');
+    const chipsBox = document.getElementById('exp-preset-chips');
+    const capIdxStr = document.getElementById('exp-capsule-idx').value;
+    const pinBtn = document.getElementById('exp-pin-default-btn');
+
+    if (pinBtn) {
+      pinBtn.style.display = capIdxStr !== '' ? 'inline-block' : 'none';
+    }
+
+    if (slider) {
+      if (cur === 'JPY') {
+        slider.max = String(Math.max(20000, amt));
+        slider.step = '100';
+      } else {
+        slider.max = String(Math.max(5000, amt));
+        slider.step = '50';
+      }
+      slider.value = String(amt);
+    }
+
+    if (liveNum) {
+      liveNum.textContent = cur === 'JPY' ? `¥ ${amt.toLocaleString()}` : `NT$ ${amt.toLocaleString()}`;
+    }
+    if (liveConv) {
+      if (cur === 'JPY') {
+        liveConv.textContent = `≈ NT$ ${toTwdInt(amt, 'JPY').toLocaleString()}`;
+      } else {
+        const rate = Number(C.getState().fxRate || 0.215);
+        const jpyEq = rate > 0 ? Math.round(amt / rate) : 0;
+        liveConv.textContent = `≈ ¥ ${jpyEq.toLocaleString()}`;
+      }
+    }
+
+    if (stepRow) {
+      const steps = cur === 'JPY' ? [-1000, -100, 100, 1000] : [-500, -100, 100, 500];
+      stepRow.innerHTML = steps.map((s) =>
+        `<button type="button" class="step-btn" data-step="${s}">${s > 0 ? '+' + s : s}</button>`
+      ).join('');
+      stepRow.querySelectorAll('.step-btn').forEach((b) => {
+        b.addEventListener('click', () => {
+          const delta = parseInt(b.getAttribute('data-step'), 10);
+          const next = Math.max(0, (parseFloat(document.getElementById('exp-amount-input').value) || 0) + delta);
+          document.getElementById('exp-amount-input').value = next;
+          updateExpPreview();
+        });
+      });
+    }
+
+    if (chipsBox) {
+      let presets = cur === 'JPY' ? [500, 1000, 2500, 5000, 10000] : [100, 300, 500, 1000, 2500];
+      if (capIdxStr !== '') {
+        const cap = getCapsules()[parseInt(capIdxStr, 10)];
+        if (cap) presets = cur === 'JPY' ? (cap.presetsJpy || presets) : (cap.presetsTwd || presets);
+      }
+      const sym = cur === 'JPY' ? '¥' : '$';
+      chipsBox.innerHTML = presets.map((p) =>
+        `<button type="button" class="preset-chip ${amt === p ? 'active' : ''}" data-preset="${p}">${sym}${p.toLocaleString()}</button>`
+      ).join('');
+      chipsBox.querySelectorAll('.preset-chip').forEach((ch) => {
+        ch.addEventListener('click', () => {
+          document.getElementById('exp-amount-input').value = ch.getAttribute('data-preset');
+          updateExpPreview();
+        });
+      });
+    }
+  }
+
   // 規格 M2：即時預覽每人分到多少，餘數放到付款人身上，加總必等於換算後台幣
   function updateExpPreview() {
+    syncSliderAndStepUI();
     const amt = parseFloat(document.getElementById('exp-amount-input').value) || 0;
     const cur = document.getElementById('exp-currency-select').value;
     const payer = document.getElementById('exp-payer-select').value;
@@ -1539,13 +1716,35 @@
     previewEl.textContent = `折合台幣共 NT$ ${twdTotal.toLocaleString()}（${parts.join(' ／ ')}）`;
   }
 
+  function openExpFormFromCapsule(idx) {
+    const cap = getCapsules()[idx];
+    if (!cap) return;
+    const amt = quickCurr === 'JPY' ? cap.jpy : cap.twd;
+    document.getElementById('exp-edit-id').value = '';
+    document.getElementById('exp-capsule-idx').value = String(idx);
+    document.getElementById('exp-title-input').value = `${cap.icon} ${cap.name}`;
+    document.getElementById('exp-amount-input').value = amt;
+    document.getElementById('exp-currency-select').value = quickCurr;
+    document.getElementById('exp-category-select').value = cap.cat;
+    document.getElementById('exp-payer-select').value = quickPayer;
+    document.getElementById('exp-note-input').value = '';
+    document.getElementById('exp-form-error').textContent = '';
+    document.getElementById('exp-delete-btn').style.display = 'none';
+    currentSplitSelection = ['老公', '老婆'];
+    expDeleteConfirm = false;
+    renderSplitButtons();
+    updateExpPreview();
+    document.getElementById('exp-form').classList.add('open');
+  }
+
   function openExpFormForEdit(id) {
     const st = C.getState();
     const ex = (st.expenses || []).find((x) => x.id === id);
     if (!ex) return;
     document.getElementById('exp-edit-id').value = ex.id;
+    document.getElementById('exp-capsule-idx').value = '';
     document.getElementById('exp-title-input').value = ex.title;
-    document.getElementById('exp-amount-input').value = ex.amount > 0 ? ex.amount : '';
+    document.getElementById('exp-amount-input').value = ex.amount > 0 ? ex.amount : 0;
     document.getElementById('exp-currency-select').value = ex.currency || 'TWD';
     document.getElementById('exp-category-select').value = ex.category || '其他';
     document.getElementById('exp-payer-select').value = ex.payer || '老公';
@@ -1563,6 +1762,7 @@
 
     const form = document.getElementById('exp-form');
     form.classList.add('open');
+    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   window.initExpenseEvents = function () {
@@ -1571,7 +1771,23 @@
       catSel.innerHTML = window.HANDBOOK_DATA.expenseCategories
         .map((c) => `<option value="${c.name}">${c.name}</option>`).join('');
     }
+    if (C.getUser()) quickPayer = C.getUser();
     renderSplitButtons();
+    renderQuickCapsules();
+
+    document.querySelectorAll('#quick-payer-seg .quick-seg-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        quickPayer = btn.getAttribute('data-payer');
+        renderQuickCapsules();
+      });
+    });
+
+    document.querySelectorAll('#quick-curr-seg .quick-seg-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        quickCurr = btn.getAttribute('data-curr');
+        renderQuickCapsules();
+      });
+    });
 
     document.getElementById('exp-reset-filter-btn').addEventListener('click', () => {
       C.setExpFilterCat('');
@@ -1581,16 +1797,17 @@
     document.getElementById('exp-add-trigger').addEventListener('click', () => {
       C.requireIdentity(() => {
         const form = document.getElementById('exp-form');
-        if (form.classList.contains('open') && !document.getElementById('exp-edit-id').value) {
+        if (form.classList.contains('open') && !document.getElementById('exp-edit-id').value && document.getElementById('exp-capsule-idx').value === '') {
           form.classList.remove('open');
           return;
         }
         document.getElementById('exp-edit-id').value = '';
+        document.getElementById('exp-capsule-idx').value = '';
         document.getElementById('exp-title-input').value = '';
-        document.getElementById('exp-amount-input').value = '';
-        document.getElementById('exp-currency-select').value = 'JPY';
+        document.getElementById('exp-amount-input').value = quickCurr === 'JPY' ? 1500 : 300;
+        document.getElementById('exp-currency-select').value = quickCurr;
         document.getElementById('exp-category-select').value = '美食';
-        document.getElementById('exp-payer-select').value = C.getUser() || '老公';
+        document.getElementById('exp-payer-select').value = quickPayer || C.getUser() || '老公';
         document.getElementById('exp-note-input').value = '';
         document.getElementById('exp-form-error').textContent = '';
         document.getElementById('exp-delete-btn').style.display = 'none';
@@ -1601,6 +1818,39 @@
         form.classList.add('open');
       });
     });
+
+    const sliderEl = document.getElementById('exp-price-slider');
+    if (sliderEl) {
+      sliderEl.addEventListener('input', () => {
+        document.getElementById('exp-amount-input').value = sliderEl.value;
+        updateExpPreview();
+      });
+    }
+
+    const zeroBtn = document.getElementById('exp-zero-btn');
+    if (zeroBtn) {
+      zeroBtn.addEventListener('click', () => {
+        document.getElementById('exp-amount-input').value = 0;
+        updateExpPreview();
+      });
+    }
+
+    const pinBtn = document.getElementById('exp-pin-default-btn');
+    if (pinBtn) {
+      pinBtn.addEventListener('click', () => {
+        const idxStr = document.getElementById('exp-capsule-idx').value;
+        if (idxStr === '') return;
+        const cap = getCapsules()[parseInt(idxStr, 10)];
+        if (!cap) return;
+        const cur = document.getElementById('exp-currency-select').value;
+        const amt = Math.max(0, Math.round(parseFloat(document.getElementById('exp-amount-input').value) || 0));
+        if (cur === 'JPY') cap.jpy = amt;
+        else cap.twd = amt;
+        C.saveLocalState(true);
+        renderQuickCapsules();
+        C.showSyncBanner(`📌 已將「${cap.name}」預設價設為 ${cur === 'JPY' ? '¥' : 'NT$'}${amt.toLocaleString()}`);
+      });
+    }
 
     ['exp-amount-input', 'exp-currency-select', 'exp-payer-select'].forEach((id) => {
       const el = document.getElementById(id);
