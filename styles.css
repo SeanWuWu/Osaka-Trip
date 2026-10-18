@@ -64,43 +64,59 @@ html, body {
 }
 .headtop {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
 }
 .brand-row {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex: 1;
 }
 .brand-icon {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 9px;
   object-fit: cover;
   border: 1px solid var(--line);
   flex-shrink: 0;
 }
+.brand-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
 .eyebrow {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .header-subtitle {
-  font-size: 15.5px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text);
   line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .header-cities {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--sub);
   letter-spacing: 0.02em;
-  margin-top: 6px;
+  margin-top: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .header-right-actions {
   display: flex;
@@ -108,33 +124,39 @@ html, body {
   gap: 6px;
   flex-shrink: 0;
 }
-.weather-btn, .fx-pill-btn {
+.top-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 5px 8px;
-  font-size: 11.5px;
   color: var(--text);
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  white-space: nowrap;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
   font-family: inherit;
-  transition: border-color 0.15s, background 0.15s;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
-.weather-btn.open, .fx-pill-btn.open {
+.top-icon-btn:active {
+  transform: scale(0.92);
+  background: var(--accent-soft);
+}
+.top-icon-btn.open {
   border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent);
 }
-.fx-pill-btn .fxp-rate {
+.top-btn-icon {
+  font-size: 15px;
   font-weight: 700;
+  line-height: 1;
 }
-.fx-pill-btn .fxp-hint {
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 600;
+.weather-btn, .fx-pill-btn {
+  /* legacy alias fallback */
 }
 
 /* 天氣抽屜（清晰逐日橫列清單） */
@@ -903,17 +925,19 @@ html, body {
   transform: scale(0.9);
 }
 
-/* 通用浮出式視窗（行程、記帳、美食、小卡、飯店地址均共用） */
+/* 通用浮出式視窗（背景虛化、磨砂玻璃與彈窗彈動質感） */
 .app-modal-backdrop,
 .exp-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 250;
-  background: rgba(20, 42, 60, 0.52);
+  z-index: 300;
+  background: rgba(14, 28, 42, 0.48);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 16px 14px calc(20px + env(safe-area-inset-bottom, 0px)) 14px;
+  padding: 16px 14px calc(24px + env(safe-area-inset-bottom, 0px)) 14px;
 }
 .app-modal-backdrop.open,
 .exp-modal-backdrop.open {
@@ -922,38 +946,52 @@ html, body {
 .app-modal-sheet,
 .exp-modal-sheet {
   width: 100%;
-  max-width: 480px;
-  max-height: 88vh;
+  max-width: 460px;
+  max-height: 86vh;
   overflow-y: auto;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 14px;
+  background: #FFFFFF;
+  border: 1px solid rgba(186, 215, 233, 0.8);
+  border-radius: 16px;
+  padding: 16px;
   margin-bottom: 0;
   display: block;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 45px rgba(10, 25, 45, 0.22), 0 2px 6px rgba(0, 0, 0, 0.04);
+  animation: modalSheetPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+@keyframes modalSheetPop {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 .app-modal-head,
 .exp-modal-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding-bottom: 10px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--line);
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(186, 215, 233, 0.45);
 }
 .app-modal-title,
 .exp-modal-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 .app-modal-close,
 .exp-modal-close {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   border: 1px solid var(--line);
   background: var(--bg);
   color: var(--sub);
@@ -964,6 +1002,14 @@ html, body {
   align-items: center;
   justify-content: center;
   padding: 0;
+  transition: all 0.15s;
+}
+.app-modal-close:hover,
+.exp-modal-close:hover,
+.app-modal-close:active,
+.exp-modal-close:active {
+  background: var(--line);
+  color: var(--text);
 }
 
 /* 行程類型小膠囊（選填：通勤、住宿、航班，未選則為一般） */
@@ -1004,6 +1050,13 @@ html, body {
 }
 
 /* APA 飯店計程車卡按鈕與內容樣式 */
+.hotel-summary-card {
+  background: #F8FBFC;
+  border: 1px solid rgba(186, 215, 233, 0.75);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 2px;
+}
 .hotel-taxi-pill {
   background: var(--card);
   border: 1px solid var(--line);
@@ -1019,74 +1072,101 @@ html, body {
   margin-bottom: 10px;
 }
 .taxi-box {
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
+  background: #F8FBFC;
+  border: 1px solid rgba(186, 215, 233, 0.65);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
 }
 .taxi-jp-name {
-  font-size: 17px;
+  font-size: 17.5px;
   font-weight: 700;
   color: var(--text);
   line-height: 1.35;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .taxi-jp-addr {
   font-size: 14px;
-  color: var(--sub);
-  line-height: 1.4;
-  margin-bottom: 8px;
+  color: var(--text);
+  line-height: 1.45;
+  margin-bottom: 10px;
+  background: #FFFFFF;
+  border: 1px dashed var(--line);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-weight: 600;
 }
 .taxi-driver-phrase {
-  background: var(--card);
-  border-left: 3px solid var(--accent);
-  padding: 8px 10px;
+  background: var(--accent-soft);
+  border-left: 3.5px solid var(--accent);
+  padding: 9px 11px;
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent);
-  border-radius: 4px;
+  border-radius: 6px;
+  line-height: 1.4;
 }
 
-/* 雲端同步即時狀態點（頂部） */
-.sync-status-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 7px;
-  border-radius: 5px;
+/* 更多分頁頂級手風琴卡片 UI */
+.accordion-header {
   background: var(--card);
   border: 1px solid var(--line);
-  font-size: 11px;
-  color: var(--sub);
-  cursor: pointer;
-}
-.sync-dot-live {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--green);
-  display: inline-block;
-}
-.sync-dot-live.offline {
-  background: var(--sub);
-}
-
-/* 更多分頁可摺疊手風琴卡片 */
-.accordion-header {
+  border-radius: 10px;
+  padding: 11px 13px;
+  margin-top: 10px;
+  margin-bottom: 0;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
   user-select: none;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+.accordion-header:hover {
+  border-color: var(--accent);
+}
+.accordion-header:active {
+  background: var(--accent-soft);
+}
+.accordion-header:not(.collapsed) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: rgba(186, 215, 233, 0.45);
+  background: #F4F8FA;
+}
+.accordion-header .acc-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.accordion-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  background: rgba(47, 111, 94, 0.12);
+  padding: 2px 7px;
+  border-radius: 10px;
 }
 .accordion-arrow {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--sub);
-  transition: transform 0.2s;
+  transition: transform 0.22s ease;
+  display: inline-block;
 }
 .accordion-header.collapsed .accordion-arrow {
   transform: rotate(-90deg);
+}
+.accordion-body {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  margin-top: -1px !important;
+  margin-bottom: 12px !important;
+  border-top: none !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
 }
 .accordion-body.collapsed {
   display: none !important;
@@ -1434,8 +1514,10 @@ html, body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(38, 33, 30, 0.72);
-  z-index: 100;
+  background: rgba(14, 28, 42, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 300;
   display: none;
   align-items: center;
   justify-content: center;
@@ -1446,15 +1528,17 @@ html, body {
 }
 .phrase-zoom-box {
   width: 100%;
-  max-width: 520px;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 20px 16px;
+  max-width: 500px;
+  background: #FFFFFF;
+  border: 1px solid rgba(186, 215, 233, 0.85);
+  border-radius: 20px;
+  padding: 22px 18px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 76vh;
+  min-height: 72vh;
+  box-shadow: 0 24px 50px rgba(10, 25, 45, 0.28);
+  animation: modalSheetPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .zoom-jp {
   font-size: clamp(26px, 7.5vw, 38px);

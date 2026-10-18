@@ -338,8 +338,10 @@
 
   window.updateSyncStatusUI = function (isOk, text) {
     const dot = document.getElementById('sync-dot-live');
-    const txt = document.getElementById('sync-text-live');
+    const btn = document.getElementById('header-sync-status');
     if (dot) dot.classList.toggle('offline', !isOk);
+    if (btn && text) btn.setAttribute('title', `雲端同步狀態：${text}（點擊診斷）`);
+    const txt = document.getElementById('sync-text-live');
     if (txt && text) txt.textContent = text;
   };
 
@@ -585,6 +587,10 @@
 
     if (fxpRateEl) {
       fxpRateEl.textContent = `1 ¥ ≈ ${rate.toFixed(3)}$`;
+    }
+    const fxBtn = document.getElementById('fx-btn');
+    if (fxBtn) {
+      fxBtn.setAttribute('title', `日圓 ⇄ 台幣即時換匯 (1¥ ≈ ${rate.toFixed(3)}$)`);
     }
 
     if (!leftIn || !rightIn) return;
@@ -1330,16 +1336,16 @@
       });
     });
 
-    // APA 飯店計程車卡彈窗
-    const hotelCardBtn = document.getElementById('hotel-taxi-card-btn');
+    // APA 飯店計程車卡彈窗（委派監聽，支援更多分頁動態渲染）
     const hotelBackdrop = document.getElementById('hotel-modal-backdrop');
     const hotelCloseBtn = document.getElementById('hotel-modal-close');
     const hotelCopyBtn = document.getElementById('hotel-copy-addr-btn');
-    if (hotelCardBtn && hotelBackdrop) {
-      hotelCardBtn.addEventListener('click', () => {
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('#hotel-taxi-card-btn');
+      if (btn && hotelBackdrop) {
         hotelBackdrop.classList.add('open');
-      });
-    }
+      }
+    });
     if (hotelCloseBtn && hotelBackdrop) {
       hotelCloseBtn.addEventListener('click', () => {
         hotelBackdrop.classList.remove('open');
@@ -2779,14 +2785,32 @@ create policy "Allow anon read write osaka_trip_sync"
     }
 
     const pct = maxChecks > 0 ? Math.round((totalChecks / maxChecks) * 100) : 0;
-    document.getElementById('chk-progress-text').textContent = `${pct}% (${totalChecks}/${maxChecks})`;
-    document.getElementById('chk-progress-fill').style.width = `${pct}%`;
+    const progressTxt = document.getElementById('chk-progress-text');
+    if (progressTxt) progressTxt.textContent = `${pct}% (${totalChecks}/${maxChecks})`;
+    const progressBadge = document.getElementById('chk-progress-badge');
+    if (progressBadge) progressBadge.textContent = `${pct}%`;
+    const progressFill = document.getElementById('chk-progress-fill');
+    if (progressFill) progressFill.style.width = `${pct}%`;
 
     // 2. 外部連結與自訂電子票券夾（規格 M5：沒有網址的外連不放假連結）
     const linksWrap = document.getElementById('more-links-wrap');
     if (linksWrap) {
       const customTicketUrl = (st.customLinks && st.customLinks.ticketFolderUrl) || '';
       let html = '';
+
+      // APA 飯店住宿與計程車卡（放置在更多分頁，界面更優雅乾淨）
+      html += `
+        <div class="hotel-summary-card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:0.04em;margin-bottom:2px;">🏨 飯店住宿・計程車大字卡</div>
+              <div style="font-size:14px;font-weight:700;color:var(--text);">APA 飯店＆度假村〈大阪難波車站前塔〉</div>
+              <div style="font-size:12px;color:var(--sub);margin-top:2px;">〒556-0017 大阪府大阪市浪速区湊町1丁目2-13</div>
+            </div>
+            <button type="button" id="hotel-taxi-card-btn" class="fx-pill" style="white-space:nowrap;padding:6px 10px;border-color:var(--accent);color:var(--accent);font-weight:700;background:var(--accent-soft);">🚖 司機字卡</button>
+          </div>
+        </div>
+      `;
 
       if (customTicketUrl) {
         html += `

@@ -25,22 +25,20 @@
       <div class="headtop">
         <div class="brand-row">
           <img src="./icon.png" alt="海之京都旅冊圖示" class="brand-icon" />
-          <div>
+          <div class="brand-info">
             <div id="header-eyebrow" class="eyebrow">OSAKA · KYOTO BY THE SEA</div>
             <div id="header-subtitle" class="header-subtitle">大阪・環球影城・海之京都</div>
           </div>
         </div>
         <div class="header-right-actions">
-          <div id="header-sync-status" class="sync-status-indicator" title="點擊立即連線檢查">
+          <button type="button" id="header-sync-status" class="top-icon-btn" title="雲端同步正常（點擊檢查）" aria-label="雲端連線狀態">
             <span id="sync-dot-live" class="sync-dot-live"></span>
-            <span id="sync-status-text">已連線</span>
-          </div>
-          <button type="button" id="weather-btn" class="weather-btn" aria-expanded="false">
-            <span>☀ 天氣</span>
           </button>
-          <button type="button" id="fx-btn" class="fx-pill-btn" aria-expanded="false" title="點開換匯計算機">
-            <span id="fxp-rate" class="fxp-rate">1 ¥ ≈ 0.215$</span>
-            <span class="fxp-hint">換匯 ▾</span>
+          <button type="button" id="weather-btn" class="top-icon-btn weather-btn" aria-expanded="false" title="查詢 10/22–10/25 天氣預報" aria-label="天氣預報">
+            <span class="top-btn-icon">☀</span>
+          </button>
+          <button type="button" id="fx-btn" class="top-icon-btn fx-pill-btn" aria-expanded="false" title="日圓 ⇄ 台幣即時換匯計算機" aria-label="換匯計算機">
+            <span class="top-btn-icon">¥</span>
           </button>
         </div>
       </div>
@@ -84,12 +82,6 @@
     <main id="pane-tl" class="tab-pane active">
       <div id="day-tabs" class="day-tabs" role="tablist"></div>
       <div id="tl-status-bar" class="tl-status-bar" role="status"></div>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
-        <button type="button" id="hotel-taxi-card-btn" class="hotel-taxi-pill" style="margin-bottom:0;">
-          🚖 APA 飯店地址・計程車大字卡
-        </button>
-      </div>
 
       <button type="button" id="tl-add-trigger" class="add-trigger-btn tl-trigger">
         <span>＋ 新增這天的行程</span>
@@ -380,30 +372,39 @@
 
     <!-- ==================== M5 更多 ==================== -->
     <section id="pane-more" class="tab-pane">
-      <!-- 1. 行前清單 -->
-      <div class="section-label" style="margin-top:0;">1 · 雙人行前準備清單</div>
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--sub);">
+      <!-- 1. 行前清單（可摺疊） -->
+      <div class="accordion-header collapsed" data-target="more-chk-wrap" style="margin-top:0;">
+        <span class="acc-title">1 · 雙人行前準備清單</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span id="chk-progress-badge" class="accordion-badge">0%</span>
+          <span class="accordion-arrow">▾</span>
+        </div>
+      </div>
+      <div id="more-chk-wrap" class="card accordion-body collapsed">
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:6px;">
           <span>老公 ＆ 老婆 合計完成進度</span>
           <strong id="chk-progress-text" style="color:var(--green);">0%</strong>
         </div>
-        <div class="progress-track">
+        <div class="progress-track" style="margin-bottom:10px;">
           <div id="chk-progress-fill" class="progress-fill" style="width:0%;"></div>
         </div>
         <div id="chk-list"></div>
-        <div style="display:flex;gap:6px;margin-top:10px;">
+        <div style="display:flex;gap:6px;margin-top:12px;">
           <input type="text" id="chk-new-input" class="form-input" placeholder="新增自訂行前準備項目..." style="padding:7px 10px;" />
           <button type="button" id="chk-add-btn" class="btn-secondary" style="width:auto;margin:0;white-space:nowrap;padding:7px 12px;">新增</button>
         </div>
       </div>
 
-      <!-- 2. 外部連結與電子票券資料夾 -->
-      <div class="section-label">2 · 實用官網與電子票券夾</div>
-      <div id="more-links-wrap" class="card" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <!-- 2. 外部連結與電子票券資料夾（可摺疊） -->
+      <div class="accordion-header collapsed" data-target="more-links-wrap">
+        <span class="acc-title">2 · 票券夾、APA 飯店卡 ＆ 實用連結</span>
+        <span class="accordion-arrow">▾</span>
+      </div>
+      <div id="more-links-wrap" class="card accordion-body collapsed" style="display:flex;flex-direction:column;gap:8px;"></div>
 
       <!-- 3. 天氣說明（可摺疊） -->
-      <div class="section-label accordion-header" data-target="more-wx-body">
-        <span>3 · 10月下旬大阪・海之京都氣候指南</span>
+      <div class="accordion-header collapsed" data-target="more-wx-body">
+        <span class="acc-title">3 · 10月下旬大阪・海之京都氣候指南</span>
         <span class="accordion-arrow">▾</span>
       </div>
       <div id="more-wx-body" class="card accordion-body collapsed">
@@ -415,8 +416,8 @@
       </div>
 
       <!-- 4. 兩則短提醒（可摺疊） -->
-      <div class="section-label accordion-header" data-target="more-reminders-wrap">
-        <span>4 · 交通與行程關鍵提醒</span>
+      <div class="accordion-header collapsed" data-target="more-reminders-wrap">
+        <span class="acc-title">4 · 交通與行程關鍵提醒</span>
         <span class="accordion-arrow">▾</span>
       </div>
       <div id="more-reminders-wrap" class="accordion-body collapsed" style="display:flex;flex-direction:column;gap:8px;">
@@ -424,8 +425,8 @@
       </div>
 
       <!-- 5. 緊急聯絡（可摺疊） -->
-      <div class="section-label accordion-header" data-target="more-emergency-wrap">
-        <span>5 · 緊急聯絡電話</span>
+      <div class="accordion-header collapsed" data-target="more-emergency-wrap">
+        <span class="acc-title">5 · 緊急聯絡電話</span>
         <span class="accordion-arrow">▾</span>
       </div>
       <div id="more-emergency-wrap" class="card accordion-body collapsed" style="display:flex;flex-direction:column;gap:8px;">
@@ -433,8 +434,8 @@
       </div>
 
       <!-- 6. Supabase 雲端同步與唯讀診斷（可摺疊） -->
-      <div class="section-label accordion-header" data-target="more-supa-wrap">
-        <span>6 · SUPABASE 雲端同步與診斷</span>
+      <div class="accordion-header collapsed" data-target="more-supa-wrap">
+        <span class="acc-title">6 · SUPABASE 雲端同步與診斷</span>
         <span class="accordion-arrow">▾</span>
       </div>
       <div id="more-supa-wrap" class="card accordion-body collapsed">
@@ -459,7 +460,7 @@
             <label class="form-label" for="supa-room-input">專屬旅冊代號（與越南 main 完全隔離）</label>
             <input type="text" id="supa-room-input" class="form-input" value="osaka_2026_couple" />
           </div>
-          <button type="button" id="supa-save-btn" class="btn-primary">儲存並立即連線同步</button>
+          <button type="submit" id="supa-save-btn" class="btn-primary">儲存並立即連線同步</button>
           <button type="button" id="supa-copy-sql-btn" class="btn-secondary">📋 一鍵複製 Supabase 建表 SQL 語法</button>
           <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);">
             <div style="font-size:12px;font-weight:700;margin-bottom:6px;">免後端快速傳送：一鍵複製／貼上旅冊資料碼</div>
@@ -471,9 +472,12 @@
         </div>
       </div>
 
-      <!-- 7. 身份與匯率設定（一鍵切換，無須打字） -->
-      <div class="section-label">7 · 身份與匯率設定</div>
-      <div class="card">
+      <!-- 7. 身份與匯率設定（可摺疊） -->
+      <div class="accordion-header collapsed" data-target="more-id-wrap">
+        <span class="acc-title">7 · 身份與匯率設定</span>
+        <span class="accordion-arrow">▾</span>
+      </div>
+      <div id="more-id-wrap" class="card accordion-body collapsed">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <span style="font-size:13px;">目前這支手機的身份：<strong id="more-current-user" style="color:var(--accent);">未選擇</strong></span>
         </div>
