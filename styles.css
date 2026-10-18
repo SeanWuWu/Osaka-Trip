@@ -187,12 +187,14 @@ html, body {
   border-bottom: none;
 }
 .wx-left {
+  flex: 1;
   min-width: 0;
 }
 .wx-day-line {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: nowrap;
 }
 .wx-day-tag {
   font-size: 11.5px;
@@ -201,44 +203,58 @@ html, body {
   background: var(--accent-soft);
   padding: 1px 6px;
   border-radius: 4px;
+  flex-shrink: 0;
 }
 .wx-date-txt {
   font-size: 13.5px;
   font-weight: 700;
   color: var(--text);
-}
-.wx-loc-txt {
-  font-size: 12px;
-  color: var(--sub);
-  margin-top: 2px;
-}
-.wx-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  text-align: right;
+  white-space: nowrap;
 }
 .wx-cond {
   font-size: 12.5px;
   color: var(--text);
   font-weight: 600;
   white-space: nowrap;
+  margin-left: 2px;
+}
+.wx-loc-txt {
+  font-size: 12.5px;
+  color: var(--sub);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wx-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  flex-shrink: 0;
+  text-align: right;
 }
 .wx-temp {
-  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--text);
+  letter-spacing: -0.01em;
   white-space: nowrap;
+  line-height: 1.2;
 }
 .wx-pop {
-  font-size: 11.5px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
   color: var(--accent);
   background: var(--accent-soft);
-  padding: 2px 6px;
+  padding: 1px 6px;
   border-radius: 4px;
   font-weight: 600;
   white-space: nowrap;
+  line-height: 1.3;
 }
 .wx-foot {
   margin-top: 8px;
@@ -576,6 +592,12 @@ html, body {
 .tl-card.is-flight {
   border-left: 3px solid var(--gold);
 }
+.tl-card.is-commute {
+  border-left: 3px solid var(--accent);
+}
+.tl-card.is-hotel {
+  border-left: 3px solid var(--green);
+}
 .tl-card.drag-placeholder {
   opacity: 0.25;
   border-style: dashed;
@@ -614,14 +636,29 @@ html, body {
   border-radius: 4px;
   letter-spacing: 0.02em;
 }
-.tl-flight-badge {
+.tl-flight-badge,
+.tl-commute-badge,
+.tl-hotel-badge {
   font-size: 11px;
-  color: var(--gold);
-  border: 1px solid var(--gold);
   border-radius: 4px;
   padding: 1px 6px;
   line-height: 1.4;
-  font-weight: 600;
+  font-weight: 700;
+}
+.tl-flight-badge {
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  background: rgba(154, 107, 36, 0.08);
+}
+.tl-commute-badge {
+  color: var(--accent);
+  border: 1px solid rgba(43, 108, 150, 0.45);
+  background: var(--accent-soft);
+}
+.tl-hotel-badge {
+  color: var(--green);
+  border: 1px solid rgba(47, 111, 94, 0.45);
+  background: rgba(47, 111, 94, 0.09);
 }
 .tl-title {
   font-size: 15.5px;
@@ -853,6 +890,62 @@ html, body {
   background: var(--accent);
   color: #FFFFFF;
   transform: scale(0.9);
+}
+
+/* 浮出式記帳微調／手動輸入視窗（不用往下滑，儲存或取消後自動消失） */
+.exp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: rgba(20, 42, 60, 0.48);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 14px calc(20px + env(safe-area-inset-bottom, 0px)) 14px;
+}
+.exp-modal-backdrop.open {
+  display: flex;
+}
+.exp-modal-sheet {
+  width: 100%;
+  max-width: 480px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 0;
+  display: block;
+}
+.exp-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.exp-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.exp-modal-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--sub);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 /* My-Bank 滑桿與步進調價面板 */

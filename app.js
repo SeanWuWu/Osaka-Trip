@@ -443,13 +443,13 @@
             <div class="wx-day-line">
               <span class="wx-day-tag">${r.day}</span>
               <span class="wx-date-txt">${r.date}</span>
+              <span class="wx-cond">${r.cond}</span>
             </div>
             <div class="wx-loc-txt">${r.loc}</div>
           </div>
           <div class="wx-right">
-            <span class="wx-cond">${r.cond}</span>
-            <span class="wx-temp">${r.tMin}°–${r.tMax}°C</span>
-            <span class="wx-pop">💧 ${r.pop}%</span>
+            <div class="wx-temp">${r.tMin}°~${r.tMax}°C</div>
+            <div class="wx-pop">💧 降雨 ${r.pop}%</div>
           </div>
         </div>
       `).join('');
@@ -651,13 +651,35 @@
   }
 
   // 規格 M1 地圖規則：
-  // 1. 航班的釘開機場（関西国際空港）
-  // 2. 手冊原有的若沒改名稱，釘用原地址 baseQ；改了名稱則搜新名稱
-  // 3. 自己新加的事項，釘用卡片上的名稱
+  // 1. 南海電鐵（d1-2 去程）：開啟「關西國際機場 ➔ APA 飯店〈大阪難波車站前塔〉」大眾運輸路線規劃（搭乘南海電鐵）
+  // 2. 南海電鐵（d4-7 返程）：開啟「APA 飯店〈大阪難波車站前塔〉 ➔ 關西國際機場第1航廈」大眾運輸路線規劃
+  // 3. 其他通勤路段（如 d2-1 飯店往環球影城、d4-6 梅田回飯店）亦開啟大眾運輸路線規劃
+  // 4. 航班開機場；一般景點開 Google 地圖定位
   function getMapUrlForItem(item) {
+    const baseId = String(item.id || '').split('-mv-')[0];
+    const text = `${item.title || ''} ${item.note || ''}`;
+    const kix = '関西国際空港 Kansai International Airport';
+    const kixT1 = '関西国際空港 第1ターミナル Kansai Airport Terminal 1';
+    const apa = 'アパホテル＆リゾート 大阪なんば駅前タワー 1-2-13 Minatomachi, Naniwa-ku, Osaka';
+    const usj = 'ユニバーサル・スタジオ・ジャパン Universal Studios Japan';
+
+    // 南海電鐵：機場 ⇄ 飯店 大眾運輸路徑規劃
+    if (baseId === 'd1-2' || (/南海[電地]鐵/.test(text) && !/前往關西機場|往機場/.test(item.title || ''))) {
+      return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(kix)}&destination=${encodeURIComponent(apa)}&travelmode=transit`;
+    }
+    if (baseId === 'd4-7' || (/南海[電地]鐵/.test(text) && /前往關西機場|往機場/.test(item.title || ''))) {
+      return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(apa)}&destination=${encodeURIComponent(kixT1)}&travelmode=transit`;
+    }
+    if (baseId === 'd2-1') {
+      return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(apa)}&destination=${encodeURIComponent(usj)}&travelmode=transit`;
+    }
+    if (baseId === 'd4-6') {
+      return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent('大阪梅田駅 Umeda Station')}&destination=${encodeURIComponent(apa)}&travelmode=transit`;
+    }
+
     let query = item.title;
     if (item.flight) {
-      query = '関西国際空港 Kansai International Airport';
+      query = kix;
     } else if (item.isHandbook) {
       if (item.title === (item.baseTitle || item.title)) {
         query = item.baseQ || item.q || item.title;
@@ -804,19 +826,52 @@
   }
   window.__escapeHtml = escapeHtml;
 
+  function getTimelineBadges(it) {
+    const baseId = String(it.id || '').split('-mv-')[0];
+    const title = String(it.title || '');
+    const badges = [];
+
+    const isFlight = !!it.flight || /航班|起飛|VZ566|GK057/.test(title);
+    if (isFlight) {
+      badges.push({ text: '航班', cls: 'tl-flight-badge', cardCls: 'is-flight' });
+    }
+
+    const isCommute = !isFlight && (
+      ['d1-2', 'd2-1', 'd3-1', 'd3-2', 'd3-6', 'd4-6', 'd4-7'].includes(baseId) ||
+      /南海[電地]鐵|搭車|搭乘|搭御堂筋線|地鐵|JR|專車返回|巴士移動|集合出發|前往日本環球影城|前往關西機場/.test(title)
+    );
+    if (isCommute) {
+      badges.push({ text: '通勤', cls: 'tl-commute-badge', cardCls: 'is-commute' });
+    }
+
+    const isHotel = !isFlight && (
+      ['d1-3', 'd3-7', 'd4-1', 'd4-6'].includes(baseId) ||
+      (/APA|飯店|入住|退房|寄放行李|領取行李/.test(title) && baseId !== 'd2-1')
+    );
+    if (isHotel) {
+      badges.push({ text: '住宿', cls: 'tl-hotel-badge', cardCls: 'is-hotel' });
+    }
+
+    return badges;
+  }
+
   window.renderTimeline = function () {
     const dayIdx = C.getDayIdx();
     const daysMeta = window.HANDBOOK_DATA.days;
 
-    // 1. Day Tabs
+    // 1. Day Tabs（加上星期：例如 Day 1 · 10/22 (四)）
     const tabsEl = document.getElementById('day-tabs');
     if (tabsEl) {
-      tabsEl.innerHTML = daysMeta.map((d, i) => `
-        <button type="button" class="day-tab ${i === dayIdx ? 'active' : ''}" data-day-idx="${i}" role="tab" aria-selected="${i === dayIdx}">
-          <span class="day-tab-top">${d.label}</span>
-          <span class="day-tab-sub">${d.dateStr}</span>
-        </button>
-      `).join('');
+      tabsEl.innerHTML = daysMeta.map((d, i) => {
+        const wkShort = String(d.weekday || '').replace('週', '');
+        const dateWithWk = wkShort ? `${d.dateStr} (${wkShort})` : d.dateStr;
+        return `
+          <button type="button" class="day-tab ${i === dayIdx ? 'active' : ''}" data-day-idx="${i}" role="tab" aria-selected="${i === dayIdx}">
+            <span class="day-tab-top">${d.label}</span>
+            <span class="day-tab-sub">${dateWithWk}</span>
+          </button>
+        `;
+      }).join('');
       tabsEl.querySelectorAll('.day-tab').forEach((btn) => {
         btn.addEventListener('click', () => {
           C.setDayIdx(Number(btn.getAttribute('data-day-idx')));
@@ -834,12 +889,15 @@
       } else {
         listEl.innerHTML = items.map((it) => {
           const mapUrl = H.getMapUrlForItem(it);
+          const badges = getTimelineBadges(it);
+          const primaryCardCls = badges.length > 0 ? badges[0].cardCls : '';
+          const badgesHtml = badges.map((b) => `<span class="${b.cls}">${b.text}</span>`).join('');
           return `
-            <div class="tl-card ${it.flight ? 'is-flight' : ''}" data-item-id="${it.id}">
+            <div class="tl-card ${primaryCardCls}" data-item-id="${it.id}">
               <div class="tl-card-main">
                 <div class="tl-time-row">
                   <span class="tl-time">${escapeHtml(it.time)}</span>
-                  ${it.flight ? '<span class="tl-flight-badge">航班</span>' : ''}
+                  ${badgesHtml}
                 </div>
                 <div class="tl-title">${escapeHtml(it.title)}</div>
                 ${it.note ? `<div class="tl-note">${escapeHtml(it.note)}</div>` : ''}
@@ -1716,6 +1774,18 @@
     previewEl.textContent = `折合台幣共 NT$ ${twdTotal.toLocaleString()}（${parts.join(' ／ ')}）`;
   }
 
+  function openExpModal(titleText) {
+    const titleEl = document.getElementById('exp-modal-title');
+    if (titleEl && titleText) titleEl.textContent = titleText;
+    const backdrop = document.getElementById('exp-modal-backdrop');
+    if (backdrop) backdrop.classList.add('open');
+  }
+
+  function closeExpModal() {
+    const backdrop = document.getElementById('exp-modal-backdrop');
+    if (backdrop) backdrop.classList.remove('open');
+  }
+
   function openExpFormFromCapsule(idx) {
     const cap = getCapsules()[idx];
     if (!cap) return;
@@ -1734,7 +1804,7 @@
     expDeleteConfirm = false;
     renderSplitButtons();
     updateExpPreview();
-    document.getElementById('exp-form').classList.add('open');
+    openExpModal(`⚡ 微調記帳：${cap.name}`);
   }
 
   function openExpFormForEdit(id) {
@@ -1760,9 +1830,7 @@
     delBtn.classList.remove('confirming');
     expDeleteConfirm = false;
 
-    const form = document.getElementById('exp-form');
-    form.classList.add('open');
-    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    openExpModal('✏️ 修改帳目明細');
   }
 
   window.initExpenseEvents = function () {
@@ -1796,11 +1864,6 @@
 
     document.getElementById('exp-add-trigger').addEventListener('click', () => {
       C.requireIdentity(() => {
-        const form = document.getElementById('exp-form');
-        if (form.classList.contains('open') && !document.getElementById('exp-edit-id').value && document.getElementById('exp-capsule-idx').value === '') {
-          form.classList.remove('open');
-          return;
-        }
         document.getElementById('exp-edit-id').value = '';
         document.getElementById('exp-capsule-idx').value = '';
         document.getElementById('exp-title-input').value = '';
@@ -1815,9 +1878,19 @@
         expDeleteConfirm = false;
         renderSplitButtons();
         updateExpPreview();
-        form.classList.add('open');
+        openExpModal('＋ 手動輸入／自訂記帳');
       });
     });
+
+    const closeBtn = document.getElementById('exp-modal-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeExpModal);
+
+    const backdropEl = document.getElementById('exp-modal-backdrop');
+    if (backdropEl) {
+      backdropEl.addEventListener('click', (e) => {
+        if (e.target === backdropEl) closeExpModal();
+      });
+    }
 
     const sliderEl = document.getElementById('exp-price-slider');
     if (sliderEl) {
@@ -1858,9 +1931,7 @@
       if (el) el.addEventListener('change', updateExpPreview);
     });
 
-    document.getElementById('exp-cancel-btn').addEventListener('click', () => {
-      document.getElementById('exp-form').classList.remove('open');
-    });
+    document.getElementById('exp-cancel-btn').addEventListener('click', closeExpModal);
 
     document.getElementById('exp-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -1922,8 +1993,10 @@
       }
 
       C.saveLocalState(true);
-      document.getElementById('exp-form').classList.remove('open');
+      closeExpModal();
       window.renderExpenses();
+      const sym = currency === 'JPY' ? '¥' : 'NT$';
+      spawnParticle(null, `✓ 已儲存 ${title} ${sym}${amount.toLocaleString()}`);
       C.showSyncBanner(editId ? `已更新帳目「${title}」` : `已記帳「${title}」`);
     });
 
@@ -1941,7 +2014,7 @@
       st.expenses = (st.expenses || []).filter((x) => x.id !== editId);
       st.tombstones[editId] = Date.now();
       C.saveLocalState(true);
-      document.getElementById('exp-form').classList.remove('open');
+      closeExpModal();
       window.renderExpenses();
       C.showSyncBanner('已刪除該筆帳目');
     });

@@ -158,77 +158,83 @@
         </button>
       </div>
 
-      <!-- 新增/微調帳目表單（My-Bank 滑桿＋步進微調＋精確輸入，置於統計卡上方） -->
-      <form id="exp-form" class="inline-form" novalidate>
-        <input type="hidden" id="exp-edit-id" value="" />
-        <input type="hidden" id="exp-capsule-idx" value="" />
+      <!-- 浮出式新增/微調帳目視窗（點選膠囊、手動輸入或編輯時彈出，儲存完後自動消失） -->
+      <div id="exp-modal-backdrop" class="exp-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="exp-modal-title">
+        <form id="exp-form" class="exp-modal-sheet" novalidate>
+          <div class="exp-modal-head">
+            <span id="exp-modal-title" class="exp-modal-title">⚡ 微調／手動記帳</span>
+            <button type="button" id="exp-modal-close" class="exp-modal-close" aria-label="關閉">✕</button>
+          </div>
+          <input type="hidden" id="exp-edit-id" value="" />
+          <input type="hidden" id="exp-capsule-idx" value="" />
 
-        <div class="form-field">
-          <label class="form-label" for="exp-title-input">項目名稱</label>
-          <input type="text" id="exp-title-input" class="form-input" placeholder="例如：一蘭拉麵、南海電鐵車票、大國藥妝" />
-        </div>
+          <div class="form-field">
+            <label class="form-label" for="exp-title-input">項目名稱</label>
+            <input type="text" id="exp-title-input" class="form-input" placeholder="例如：一蘭拉麵、南海電鐵車票、大國藥妝" />
+          </div>
 
-        <!-- My-Bank 大字即時金額顯示 ＋ 滑桿 ＋ 步進按鈕 -->
-        <div class="exp-live-price-box">
-          <div class="exp-live-top">
-            <div>
-              <span id="exp-live-num" class="exp-live-num">¥ 2,500</span>
-              <span id="exp-live-conv" class="exp-live-conv">≈ NT$ 538</span>
+          <!-- My-Bank 大字即時金額顯示 ＋ 滑桿 ＋ 步進按鈕 -->
+          <div class="exp-live-price-box">
+            <div class="exp-live-top">
+              <div>
+                <span id="exp-live-num" class="exp-live-num">¥ 2,500</span>
+                <span id="exp-live-conv" class="exp-live-conv">≈ NT$ 538</span>
+              </div>
+              <button type="button" id="exp-pin-default-btn" class="pin-default-btn" style="display:none;">📌 設為預設價</button>
             </div>
-            <button type="button" id="exp-pin-default-btn" class="pin-default-btn" style="display:none;">📌 設為預設價</button>
+
+            <input type="range" id="exp-price-slider" class="price-slider" min="0" max="20000" step="100" value="2500" />
+
+            <div id="exp-step-row" class="step-row">
+              <button type="button" class="step-btn" data-step="-1000">-1000</button>
+              <button type="button" class="step-btn" data-step="-100">-100</button>
+              <button type="button" class="step-btn" data-step="100">+100</button>
+              <button type="button" class="step-btn" data-step="1000">+1000</button>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 98px 72px;gap:6px;align-items:center;">
+              <input type="number" id="exp-amount-input" class="form-input" placeholder="直接輸入金額" inputmode="numeric" min="0" step="1" />
+              <select id="exp-currency-select" class="form-select">
+                <option value="JPY">日圓 ¥</option>
+                <option value="TWD">台幣 $</option>
+              </select>
+              <button type="button" id="exp-zero-btn" class="btn-secondary" style="margin-top:0;padding:10px 4px;font-size:12px;">⌫ 歸零</button>
+            </div>
+
+            <div id="exp-preset-chips" class="preset-chips-row"></div>
           </div>
 
-          <input type="range" id="exp-price-slider" class="price-slider" min="0" max="20000" step="100" value="2500" />
-
-          <div id="exp-step-row" class="step-row">
-            <button type="button" class="step-btn" data-step="-1000">-1000</button>
-            <button type="button" class="step-btn" data-step="-100">-100</button>
-            <button type="button" class="step-btn" data-step="100">+100</button>
-            <button type="button" class="step-btn" data-step="1000">+1000</button>
+          <div class="form-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <label class="form-label" for="exp-category-select">類別</label>
+              <select id="exp-category-select" class="form-select"></select>
+            </div>
+            <div>
+              <label class="form-label" for="exp-payer-select">誰付的</label>
+              <select id="exp-payer-select" class="form-select">
+                <option value="老公">老公</option>
+                <option value="老婆">老婆</option>
+              </select>
+            </div>
           </div>
 
-          <div style="display:grid;grid-template-columns:1fr 98px 72px;gap:6px;align-items:center;">
-            <input type="number" id="exp-amount-input" class="form-input" placeholder="直接輸入金額" inputmode="numeric" min="0" step="1" />
-            <select id="exp-currency-select" class="form-select">
-              <option value="JPY">日圓 ¥</option>
-              <option value="TWD">台幣 $</option>
-            </select>
-            <button type="button" id="exp-zero-btn" class="btn-secondary" style="margin-top:0;padding:10px 4px;font-size:12px;">⌫ 歸零</button>
+          <div class="form-field">
+            <label class="form-label">使用對象（點選切換）</label>
+            <div id="exp-split-group" class="split-check-row"></div>
+            <div id="exp-preview-line" style="font-size:12px;color:var(--green);margin-top:6px;font-weight:600;"></div>
           </div>
 
-          <div id="exp-preset-chips" class="preset-chips-row"></div>
-        </div>
-
-        <div class="form-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div>
-            <label class="form-label" for="exp-category-select">類別</label>
-            <select id="exp-category-select" class="form-select"></select>
+          <div class="form-field">
+            <label class="form-label" for="exp-note-input">備註（選填）</label>
+            <input type="text" id="exp-note-input" class="form-input" placeholder="例如：刷卡、付現、待補金額" />
           </div>
-          <div>
-            <label class="form-label" for="exp-payer-select">誰付的</label>
-            <select id="exp-payer-select" class="form-select">
-              <option value="老公">老公</option>
-              <option value="老婆">老婆</option>
-            </select>
-          </div>
-        </div>
 
-        <div class="form-field">
-          <label class="form-label">使用對象（點選切換）</label>
-          <div id="exp-split-group" class="split-check-row"></div>
-          <div id="exp-preview-line" style="font-size:12px;color:var(--green);margin-top:6px;font-weight:600;"></div>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label" for="exp-note-input">備註（選填）</label>
-          <input type="text" id="exp-note-input" class="form-input" placeholder="例如：刷卡、付現、待補金額" />
-        </div>
-
-        <div id="exp-form-error" class="form-error"></div>
-        <button type="submit" id="exp-submit-btn" class="btn-primary">⚡ 儲存這筆帳</button>
-        <button type="button" id="exp-cancel-btn" class="btn-secondary">取消</button>
-        <button type="button" id="exp-delete-btn" class="btn-danger-outline" style="display:none;">刪除此筆帳目</button>
-      </form>
+          <div id="exp-form-error" class="form-error"></div>
+          <button type="submit" id="exp-submit-btn" class="btn-primary">⚡ 儲存這筆帳</button>
+          <button type="button" id="exp-cancel-btn" class="btn-secondary">取消</button>
+          <button type="button" id="exp-delete-btn" class="btn-danger-outline" style="display:none;">刪除此筆帳目</button>
+        </form>
+      </div>
 
       <!-- 旅程總花費統計卡 -->
       <div class="exp-summary-card">
