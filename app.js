@@ -1429,13 +1429,17 @@
     { icon: '🏪', name: '超商／零食', cat: '美食', jpy: 800, twd: 180, presetsJpy: [300, 500, 800, 1200, 2000], presetsTwd: [60, 100, 180, 260, 450] },
     { icon: '☕', name: '咖啡／甜點', cat: '美食', jpy: 1200, twd: 260, presetsJpy: [600, 900, 1200, 1800, 2500], presetsTwd: [120, 200, 260, 400, 550] },
     { icon: '🚇', name: '地鐵／交通', cat: '交通', jpy: 600, twd: 130, presetsJpy: [240, 480, 600, 1000, 3000], presetsTwd: [50, 100, 130, 220, 650] },
-    { icon: '🛍️', name: '藥妝／伴手禮', cat: '伴手禮・購物', jpy: 5000, twd: 1100, presetsJpy: [2000, 3500, 5000, 10000, 15000], presetsTwd: [450, 750, 1100, 2200, 3300] }
+    { icon: '🛍️', name: '藥妝／伴手禮', cat: '購物/伴手禮', jpy: 5000, twd: 1100, presetsJpy: [2000, 3500, 5000, 10000, 15000], presetsTwd: [450, 750, 1100, 2200, 3300] }
   ];
 
   function getCapsules() {
     const st = C.getState();
     if (!Array.isArray(st.quickCapsules) || st.quickCapsules.length !== DEFAULT_CAPSULES.length) {
       st.quickCapsules = DEFAULT_CAPSULES.map((c) => ({ ...c }));
+    } else {
+      st.quickCapsules.forEach((c) => {
+        if (c.cat === '伴手禮・購物') c.cat = '購物/伴手禮';
+      });
     }
     return st.quickCapsules;
   }
