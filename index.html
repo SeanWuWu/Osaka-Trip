@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#FAF8F3" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>大阪・海之京都 雙人旅冊｜2026.10.22–10.25</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- 雲端同步提示條 -->
+    <div id="sync-banner" class="sync-banner" role="status">
+      <span id="sync-banner-text">本機已儲存</span>
+      <button type="button" id="sync-banner-close" class="fx-pill">知道了</button>
+    </div>
+
+    <!-- 3.1 頂部 Header -->
+    <header class="top-header">
+      <div class="eyebrow-row">
+        <div id="header-eyebrow" class="eyebrow">OSAKA · D-4</div>
+        <div class="header-right-actions">
+          <button type="button" id="identity-pill" class="identity-pill" title="前往設定切換身份">
+            我是：<strong id="current-user-label">未選擇</strong>
+          </button>
+          <button type="button" id="weather-btn" class="weather-btn">
+            <span>☀ 天氣</span>
+          </button>
+        </div>
+      </div>
+      <div id="header-subtitle" class="header-subtitle">老公與老婆的大阪・環球影城・海之京都四日秋旅</div>
+      <div id="header-cities" class="header-cities">關西機場 · 難波 · 環球影城 · 天橋立 · 伊根 · 梅田</div>
+    </header>
+
+    <!-- 天氣展開面板 -->
+    <section id="weather-drawer" class="weather-drawer" aria-label="行程天氣預報">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:12.5px;font-weight:700;color:var(--text);">10/22–10/25 行程天氣與降雨機率</span>
+        <button type="button" id="weather-close-btn" class="fx-pill">收起</button>
+      </div>
+      <div id="weather-content" style="margin-top:6px;"></div>
+    </section>
+
+    <!-- 3.2 匯率條 -->
+    <section class="fx-bar" aria-label="日圓台幣匯率換算">
+      <div class="fx-top-row">
+        <div class="fx-input-group">
+          <span id="fx-left-label" class="fx-currency-label">日圓 ¥</span>
+          <input type="number" id="fx-left-input" class="fx-input" value="1000" inputmode="decimal" />
+        </div>
+        <button type="button" id="fx-swap-btn" class="fx-swap-btn" title="對調日圓與台幣">⇄</button>
+        <div class="fx-input-group">
+          <span id="fx-right-label" class="fx-currency-label">台幣 $</span>
+          <input type="number" id="fx-right-input" class="fx-input" value="215" inputmode="decimal" readonly />
+        </div>
+      </div>
+      <div class="fx-bottom-row">
+        <div id="fx-quick-pills" class="fx-quick-pills"></div>
+        <div id="fx-rate-info" class="fx-rate-info">1 日圓 ≈ 0.215 台幣</div>
+      </div>
+    </section>
+
+    <!-- ==================== M1 時間表 ==================== -->
+    <main id="pane-tl" class="tab-pane active">
+      <div id="day-tabs" class="day-tabs" role="tablist"></div>
+      <div id="tl-status-bar" class="tl-status-bar" role="status"></div>
+
+      <button type="button" id="tl-add-trigger" class="add-trigger-btn tl-trigger">
+        <span>＋ 新增這天的行程</span>
+        <span style="font-size:11.5px;color:var(--sub);font-weight:400;">時間 · 地點 · 備註</span>
+      </button>
+
+      <!-- 新增/編輯行程表單 -->
+      <form id="tl-form" class="inline-form" novalidate>
+        <input type="hidden" id="tl-edit-id" value="" />
+        <div class="form-field">
+          <label class="form-label">時間設定</label>
+          <div id="tl-token-pills" class="time-token-pills"></div>
+          <div id="tl-wheel-area">
+            <div class="wheel-group">
+              <select id="tl-start-hour" class="wheel-select" aria-label="開始小時"></select>
+              <span>:</span>
+              <select id="tl-start-min" class="wheel-select" aria-label="開始分鐘"></select>
+            </div>
+            <div id="tl-end-wheel-wrap" class="wheel-group" style="display:none;">
+              <span style="font-size:12px;color:var(--sub);white-space:nowrap;">至</span>
+              <select id="tl-end-hour" class="wheel-select" aria-label="結束小時"></select>
+              <span>:</span>
+              <select id="tl-end-min" class="wheel-select" aria-label="結束分鐘"></select>
+            </div>
+            <button type="button" id="tl-toggle-end-btn" class="btn-secondary" style="margin-bottom:4px;">＋ 加結束時間</button>
+          </div>
+          <div id="tl-token-preview" style="font-size:12px;color:var(--accent);font-weight:700;"></div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="tl-title-input">地點／事項</label>
+          <input type="text" id="tl-title-input" class="form-input" placeholder="貼上 Google 地圖的名稱" />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="tl-note-input">備註（選填）</label>
+          <textarea id="tl-note-input" class="form-textarea" rows="2" placeholder="交通方式、預約時間或注意事項"></textarea>
+        </div>
+
+        <div id="tl-form-error" class="form-error"></div>
+        <button type="submit" id="tl-submit-btn" class="btn-primary">儲存行程</button>
+        <button type="button" id="tl-cancel-btn" class="btn-secondary">取消</button>
+        <button type="button" id="tl-delete-btn" class="btn-danger-outline" style="display:none;">刪除此筆行程</button>
+        <button type="button" id="tl-restore-day-btn" class="btn-secondary" style="margin-top:8px;color:var(--sub);">恢復本日預設行程</button>
+      </form>
+
+      <!-- 行程卡片清單 -->
+      <div id="tl-list" class="tl-list"></div>
+
+      <!-- 當日路線（手繪地圖 7:9） -->
+      <div class="section-label">當日路線 · ROUTE MAP</div>
+      <div class="route-map-card">
+        <div class="route-svg-wrap">
+          <svg viewBox="0 0 350 450" xmlns="http://www.w3.org/2000/svg" aria-label="大阪與海之京都手繪路線圖">
+            <defs>
+              <marker id="arr-d1" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="#B0432E" />
+              </marker>
+              <marker id="arr-d2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="#4A7C63" />
+              </marker>
+              <marker id="arr-d3" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="#C99A4B" />
+              </marker>
+              <marker id="arr-d4" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="#4A6B82" />
+              </marker>
+            </defs>
+            <!-- 手繪海岸線與山脈背景 -->
+            <rect width="350" height="450" fill="#FAF8F3" />
+            <!-- 若狹灣 / 日本海 (北側) -->
+            <path d="M 0,48 Q 70,62 125,52 T 240,68 T 350,40 L 350,0 L 0,0 Z" fill="#EFECE4" stroke="#E8E2D6" stroke-width="1" />
+            <!-- 天橋立沙洲細節 -->
+            <path d="M 122,62 Q 138,57 154,60" stroke="#C99A4B" stroke-width="2.5" stroke-linecap="round" fill="none" />
+            <!-- 大阪灣 (西南側) -->
+            <path d="M 0,250 Q 95,245 128,285 Q 145,320 112,375 Q 92,415 65,450 L 0,450 Z" fill="#EFECE4" stroke="#E8E2D6" stroke-width="1" />
+            <!-- 關西機場人工島 -->
+            <rect x="64" y="378" width="28" height="14" rx="2" fill="#FAF8F3" stroke="#8A8177" stroke-width="1.2" transform="rotate(-22 78 385)" />
+            <!-- 淀川水系細線 -->
+            <path d="M 350,195 Q 250,215 198,236 T 122,265" stroke="#E8E2D6" stroke-width="2" fill="none" />
+
+            <!-- Day 1 路線 (磚紅 #B0432E): KIX -> 難波 APA -> 心齋橋/道頓堀 -->
+            <g id="map-route-0" class="map-route-layer" opacity="1">
+              <path d="M 86,376 Q 152,350 186,304" stroke="#B0432E" stroke-width="2.6" stroke-dasharray="5,4" fill="none" marker-end="url(#arr-d1)" />
+              <path d="M 192,292 Q 204,282 196,272" stroke="#B0432E" stroke-width="2.6" stroke-dasharray="4,3" fill="none" marker-end="url(#arr-d1)" />
+            </g>
+
+            <!-- Day 2 路線 (綠 #4A7C63): 難波 -> 西九條 -> USJ 往返 -->
+            <g id="map-route-1" class="map-route-layer" opacity="0.1">
+              <path d="M 182,294 Q 154,282 134,270" stroke="#4A7C63" stroke-width="2.6" stroke-dasharray="5,4" fill="none" marker-end="url(#arr-d2)" />
+              <path d="M 134,262 Q 160,272 184,288" stroke="#4A7C63" stroke-width="2" stroke-dasharray="3,3" fill="none" />
+            </g>
+
+            <!-- Day 3 路線 (金 #C99A4B): 難波/日本橋 -> 西舞鶴 -> 天橋立 -> 伊根舟屋 -> 心齋橋 -->
+            <g id="map-route-2" class="map-route-layer" opacity="0.1">
+              <path d="M 200,290 Q 212,195 190,112" stroke="#C99A4B" stroke-width="2.6" stroke-dasharray="5,4" fill="none" marker-end="url(#arr-d3)" />
+              <path d="M 184,104 Q 158,88 138,76" stroke="#C99A4B" stroke-width="2.6" stroke-dasharray="4,3" fill="none" marker-end="url(#arr-d3)" />
+              <path d="M 140,68 Q 154,48 172,42" stroke="#C99A4B" stroke-width="2.6" stroke-dasharray="4,3" fill="none" marker-end="url(#arr-d3)" />
+              <path d="M 178,48 Q 248,165 198,274" stroke="#C99A4B" stroke-width="2.2" stroke-dasharray="5,5" fill="none" marker-end="url(#arr-d3)" />
+            </g>
+
+            <!-- Day 4 路線 (藍 #4A6B82): 難波 -> 中崎町 -> 梅田 -> 難波 -> KIX -->
+            <g id="map-route-3" class="map-route-layer" opacity="0.1">
+              <path d="M 192,290 Q 204,254 208,224" stroke="#4A6B82" stroke-width="2.6" stroke-dasharray="5,4" fill="none" marker-end="url(#arr-d4)" />
+              <path d="M 204,220 L 192,232" stroke="#4A6B82" stroke-width="2.4" fill="none" marker-end="url(#arr-d4)" />
+              <path d="M 188,240 Q 184,268 188,290" stroke="#4A6B82" stroke-width="2.4" stroke-dasharray="4,3" fill="none" marker-end="url(#arr-d4)" />
+              <path d="M 184,302 Q 134,335 86,374" stroke="#4A6B82" stroke-width="2.6" stroke-dasharray="5,4" fill="none" marker-end="url(#arr-d4)" />
+            </g>
+
+            <!-- 地標節點與文字 -->
+            <!-- 伊根舟屋 -->
+            <circle cx="175" cy="40" r="4.5" fill="#FAF8F3" stroke="#26211E" stroke-width="1.8" />
+            <text x="185" y="43" font-size="11" font-weight="700" fill="#26211E">伊根舟屋</text>
+            <text x="185" y="55" font-size="9.5" fill="#8A8177">伊根湾遊覧船</text>
+
+            <!-- 天橋立 -->
+            <circle cx="134" cy="72" r="4.5" fill="#FAF8F3" stroke="#26211E" stroke-width="1.8" />
+            <text x="58" y="74" font-size="11" font-weight="700" fill="#26211E">天橋立</text>
+            <text x="48" y="86" font-size="9.5" fill="#8A8177">飛龍観・智恩寺</text>
+
+            <!-- 西舞鶴 -->
+            <circle cx="188" cy="108" r="4" fill="#FAF8F3" stroke="#8A8177" stroke-width="1.6" />
+            <text x="198" y="111" font-size="10.5" fill="#26211E">西舞鶴駅 (丹後海上列車)</text>
+
+            <!-- 中崎町・梅田 -->
+            <circle cx="208" cy="220" r="4" fill="#FAF8F3" stroke="#26211E" stroke-width="1.6" />
+            <text x="218" y="222" font-size="10.5" font-weight="700" fill="#26211E">中崎町</text>
+            <circle cx="190" cy="236" r="4.5" fill="#FAF8F3" stroke="#26211E" stroke-width="1.8" />
+            <text x="200" y="242" font-size="11" font-weight="700" fill="#26211E">梅田 (LUCUA)</text>
+
+            <!-- USJ -->
+            <circle cx="130" cy="266" r="5" fill="#FAF8F3" stroke="#4A7C63" stroke-width="2" />
+            <text x="26" y="264" font-size="11" font-weight="700" fill="#26211E">日本環球影城</text>
+            <text x="46" y="276" font-size="9.5" fill="#8A8177">USJ・任天堂</text>
+
+            <!-- 心齋橋・道頓堀 -->
+            <circle cx="194" cy="272" r="4" fill="#FAF8F3" stroke="#26211E" stroke-width="1.6" />
+            <text x="204" y="275" font-size="10.5" fill="#26211E">心齋橋・道頓堀・日本橋</text>
+
+            <!-- 難波 APA 飯店 -->
+            <circle cx="188" cy="296" r="5.5" fill="#B0432E" stroke="#FAF8F3" stroke-width="1.5" />
+            <text x="200" y="300" font-size="11.5" font-weight="700" fill="#B0432E">難波 (APA 難波車站前塔)</text>
+
+            <!-- 關西國際機場 KIX -->
+            <circle cx="78" cy="384" r="5" fill="#FAF8F3" stroke="#C99A4B" stroke-width="2" />
+            <text x="98" y="388" font-size="11" font-weight="700" fill="#26211E">關西國際機場 (KIX)</text>
+            <text x="98" y="401" font-size="9.5" fill="#8A8177">VZ566 抵達 / GK057 返程</text>
+          </svg>
+        </div>
+        <div id="route-summary-line" class="route-summary-line"></div>
+        <div id="route-jp-line" class="route-jp-line"></div>
+      </div>
+    </main>
+
+    <!-- ==================== M2 記帳（總花費統計與分類明細） ==================== -->
+    <section id="pane-exp" class="tab-pane">
+      <div class="exp-summary-card">
+        <div class="section-label" style="margin-top:0;">旅程總花費統計（折合台幣）</div>
+        <div class="exp-total-row">
+          <div>
+            <div id="exp-total-twd" class="exp-total-num">NT$ 0</div>
+            <div id="exp-total-sub" style="font-size:12px;color:var(--sub);">台幣小計 NT$ 0 ＋ 日圓小計 ¥0</div>
+          </div>
+          <button type="button" id="exp-reset-filter-btn" class="fx-pill" style="display:none;">顯示全部分類</button>
+        </div>
+
+        <div class="exp-payer-grid">
+          <div class="exp-payer-box">
+            <div class="exp-payer-name">老公 已付總額</div>
+            <div id="exp-paid-husband" class="exp-payer-val">NT$ 0</div>
+          </div>
+          <div class="exp-payer-box">
+            <div class="exp-payer-name">老婆 已付總額</div>
+            <div id="exp-paid-wife" class="exp-payer-val">NT$ 0</div>
+          </div>
+        </div>
+
+        <div class="section-label" style="margin:6px 0;">分類花費佔比與明細（點選可篩選）</div>
+        <div id="exp-cat-bar" class="exp-cat-bar"></div>
+        <div id="exp-cat-grid" class="exp-cat-grid"></div>
+      </div>
+
+      <button type="button" id="exp-add-trigger" class="add-trigger-btn exp-trigger">
+        <span>＋ 記一筆帳</span>
+        <span style="font-size:11.5px;color:var(--sub);font-weight:400;">日圓 · 台幣 · 分類統計</span>
+      </button>
+
+      <!-- 新增/修改帳目表單 -->
+      <form id="exp-form" class="inline-form" novalidate>
+        <input type="hidden" id="exp-edit-id" value="" />
+        <div class="form-field">
+          <label class="form-label" for="exp-title-input">項目名稱</label>
+          <input type="text" id="exp-title-input" class="form-input" placeholder="例如：松阪牛燒肉晚餐、南海電鐵車票" />
+        </div>
+
+        <div class="form-field" style="display:grid;grid-template-columns:1fr 110px;gap:8px;">
+          <div>
+            <label class="form-label" for="exp-amount-input">金額（純數字）</label>
+            <input type="number" id="exp-amount-input" class="form-input" placeholder="0" inputmode="numeric" min="0" step="1" />
+          </div>
+          <div>
+            <label class="form-label" for="exp-currency-select">幣別</label>
+            <select id="exp-currency-select" class="form-select">
+              <option value="JPY">日圓 ¥</option>
+              <option value="TWD">台幣 $</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <label class="form-label" for="exp-category-select">類別</label>
+            <select id="exp-category-select" class="form-select"></select>
+          </div>
+          <div>
+            <label class="form-label" for="exp-payer-select">誰付的</label>
+            <select id="exp-payer-select" class="form-select">
+              <option value="老公">老公</option>
+              <option value="老婆">老婆</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">使用對象（點選切換）</label>
+          <div id="exp-split-group" class="split-check-row"></div>
+          <div id="exp-preview-line" style="font-size:12px;color:var(--green);margin-top:6px;font-weight:600;"></div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="exp-note-input">備註（選填）</label>
+          <input type="text" id="exp-note-input" class="form-input" placeholder="例如：刷卡、付現、待補金額" />
+        </div>
+
+        <div id="exp-form-error" class="form-error"></div>
+        <button type="submit" id="exp-submit-btn" class="btn-primary">儲存這筆帳</button>
+        <button type="button" id="exp-cancel-btn" class="btn-secondary">取消</button>
+        <button type="button" id="exp-delete-btn" class="btn-danger-outline" style="display:none;">刪除此筆帳目</button>
+      </form>
+
+      <div id="exp-list"></div>
+    </section>
+
+    <!-- ==================== M3 美食景點 ==================== -->
+    <section id="pane-pl" class="tab-pane">
+      <div id="pl-filter-pills" class="filter-pills"></div>
+
+      <button type="button" id="pl-add-trigger" class="add-trigger-btn pl-trigger">
+        <span>＋ 推薦店家／景點</span>
+        <span style="font-size:11.5px;color:var(--sub);font-weight:400;">收藏口袋名單 · 打卡</span>
+      </button>
+
+      <form id="pl-form" class="inline-form" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="pl-name-input">店名／景點</label>
+          <input type="text" id="pl-name-input" class="form-input" placeholder="貼上 Google 地圖的店名" />
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="pl-tag-input">分類</label>
+          <input type="text" id="pl-tag-input" class="form-input" placeholder="例如：燒肉、甜點、拉麵、逛街、景點" />
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="pl-note-input">一句話特色</label>
+          <input type="text" id="pl-note-input" class="form-input" placeholder="例如：老婆想吃的千層蛋糕、必買伴手禮" />
+        </div>
+        <div id="pl-form-error" class="form-error"></div>
+        <button type="submit" class="btn-primary">加入口袋名單</button>
+        <button type="button" id="pl-cancel-btn" class="btn-secondary">取消</button>
+      </form>
+
+      <div id="pl-list"></div>
+    </section>
+
+    <!-- ==================== M4 小卡 ==================== -->
+    <section id="pane-card" class="tab-pane">
+      <div style="font-size:12px;color:var(--sub);margin-bottom:8px;">
+        點選任一張小卡可<strong>全螢幕放大給日本店員看</strong>，並支援日文語音朗讀與一鍵複製。讀音皆為台灣人好念的近似諧音。
+      </div>
+      <div id="card-filter-pills" class="filter-pills"></div>
+      <div id="card-list" class="phrase-grid"></div>
+    </section>
+
+    <!-- ==================== M5 更多 ==================== -->
+    <section id="pane-more" class="tab-pane">
+      <!-- 1. 行前清單 -->
+      <div class="section-label" style="margin-top:0;">1 · 雙人行前準備清單</div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--sub);">
+          <span>老公 ＆ 老婆 合計完成進度</span>
+          <strong id="chk-progress-text" style="color:var(--green);">0%</strong>
+        </div>
+        <div class="progress-track">
+          <div id="chk-progress-fill" class="progress-fill" style="width:0%;"></div>
+        </div>
+        <div id="chk-list"></div>
+        <div style="display:flex;gap:6px;margin-top:10px;">
+          <input type="text" id="chk-new-input" class="form-input" placeholder="新增自訂行前準備項目..." style="padding:6px 9px;font-size:12.5px;" />
+          <button type="button" id="chk-add-btn" class="btn-secondary" style="width:auto;margin:0;white-space:nowrap;padding:6px 12px;">新增</button>
+        </div>
+      </div>
+
+      <!-- 2. 外部連結與電子票券資料夾 -->
+      <div class="section-label">2 · 實用官網與電子票券夾</div>
+      <div id="more-links-wrap" class="card" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+      <!-- 3. 打卡王 -->
+      <div class="section-label">3 · 美食景點打卡紀錄</div>
+      <div id="more-leaderboard" class="card"></div>
+
+      <!-- 4. 天氣說明 -->
+      <div class="section-label">4 · 10月下旬大阪・海之京都氣候指南</div>
+      <div class="card">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:4px;">大阪市區（難波・USJ・梅田）＆ 京都北部（天橋立・伊根）</div>
+        <p style="font-size:12.5px;color:var(--sub);margin-bottom:8px;">
+          10月下旬進入深秋，大阪市區白天舒適，早晚偏涼；Day 2 環球影城晚間萬聖節活動靠海港風大、Day 3 天橋立與伊根灣搭遊船海風較冷，建議採用「洋蔥式穿搭（薄長袖＋防風保暖外套）」。即時氣溫與降雨機率詳細請按右上角「☀ 天氣」。
+        </p>
+        <button type="button" id="more-open-weather-btn" class="btn-secondary" style="margin:0;">查看右上角即時天氣預報</button>
+      </div>
+
+      <!-- 5. 兩則短提醒 -->
+      <div class="section-label">5 · 交通與行程關鍵提醒</div>
+      <div id="more-reminders" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+      <!-- 6. 緊急聯絡 -->
+      <div class="section-label">6 · 緊急聯絡電話</div>
+      <div id="more-emergency" class="card" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+      <!-- 7. Supabase 雲端同步與唯讀診斷 -->
+      <div class="section-label">7 · SUPABASE 雲端同步與診斷</div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">雙人手機即時同步（已預設連接共用 Supabase）</div>
+        <p style="font-size:12px;color:var(--sub);margin-bottom:8px;">
+          已自動連通您的 Supabase 後台（資料表 <code>trip_store</code>，專屬隔離代號 <code>id="osaka_2026_couple"</code>），與越南專案（<code>id="main"</code>）100% 獨立互不干擾，打開即可雙向同步！
+        </p>
+        <button type="button" id="diag-test-btn" class="btn-secondary">立即測試同步（唯讀診斷，不寫入資料）</button>
+        <div id="diag-result-box" style="font-size:12px;color:var(--sub);margin:6px 0 10px 0;padding:8px;background:var(--bg);border:1px solid var(--line);border-radius:4px;display:none;"></div>
+
+        <button type="button" id="supa-toggle-config-btn" class="btn-secondary" style="margin-bottom:0;">展開／檢視 Supabase 連線設定 ＆ 備份碼</button>
+        <div id="supa-config-panel" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);">
+          <div class="form-field">
+            <label class="form-label" for="supa-url-input">Supabase Project URL</label>
+            <input type="url" id="supa-url-input" class="form-input" placeholder="https://xxxx.supabase.co" />
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="supa-key-input">Supabase Anon Public Key</label>
+            <input type="text" id="supa-key-input" class="form-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5..." />
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="supa-room-input">專屬旅冊代號（與越南 main 完全隔離）</label>
+            <input type="text" id="supa-room-input" class="form-input" value="osaka_2026_couple" />
+          </div>
+          <button type="button" id="supa-save-btn" class="btn-primary">儲存並立即連線同步</button>
+          <button type="button" id="supa-copy-sql-btn" class="btn-secondary">📋 一鍵複製 Supabase 建表 SQL 語法</button>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);">
+            <div style="font-size:12px;font-weight:700;margin-bottom:6px;">免後端快速傳送：一鍵複製／貼上旅冊資料碼</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+              <button type="button" id="export-json-btn" class="btn-secondary" style="margin:0;">複製目前資料碼</button>
+              <button type="button" id="import-json-btn" class="btn-secondary" style="margin:0;">貼上對方資料碼</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. 設定 -->
+      <div class="section-label">8 · 身份與匯率設定</div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <span style="font-size:13px;">目前這支手機的身份：<strong id="more-current-user" style="color:var(--accent);">未選擇</strong></span>
+        </div>
+        <div class="form-field" style="margin-bottom:8px;">
+          <label class="form-label" for="switch-user-input">若要換人，請輸入對方稱呼（老公 或 老婆）防誤觸：</label>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="switch-user-input" class="form-input" placeholder="輸入 老公 或 老婆" style="padding:7px 10px;" />
+            <button type="button" id="switch-user-btn" class="btn-secondary" style="width:auto;margin:0;white-space:nowrap;padding:7px 12px;">切換身份</button>
+          </div>
+          <div id="switch-user-msg" class="form-error"></div>
+        </div>
+        <button type="button" id="refresh-fx-btn" class="btn-secondary" style="margin:0;">重新整理即時日圓匯率</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- 3.3 第一次開啟全螢幕選擇「我是誰」 -->
+  <div id="identity-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="id-modal-title">
+    <div class="card" style="width:100%;max-width:360px;padding:20px 16px;text-align:center;">
+      <div class="eyebrow" style="margin-bottom:6px;">OSAKA TRIP · 2026.10.22–10.25</div>
+      <h2 id="id-modal-title" style="font-size:17px;margin-bottom:6px;">請問這支手機是誰在使用？</h2>
+      <p style="font-size:12.5px;color:var(--sub);margin-bottom:16px;">
+        選好後會鎖定在這支手機，方便記錄各自的行前打勾、打卡與記帳付款人。
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button type="button" class="btn-primary id-select-btn" data-member="老公" style="margin:0;padding:14px 10px;font-size:15px;">我是 老公</button>
+        <button type="button" class="btn-primary id-select-btn" data-member="老婆" style="margin:0;padding:14px 10px;font-size:15px;background:var(--accent);border-color:var(--accent);">我是 老婆</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- M4 小卡全螢幕放大層 -->
+  <div id="phrase-modal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="phrase-zoom-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span id="zoom-cat" class="place-tag">點餐</span>
+        <button type="button" id="zoom-close-btn" class="btn-secondary" style="width:auto;margin:0;padding:5px 12px;font-weight:700;">✕ 關閉</button>
+      </div>
+      <div>
+        <div style="font-size:11.5px;color:var(--sub);">請給店員看這行日文：</div>
+        <div id="zoom-jp" class="zoom-jp"></div>
+        <div id="zoom-zh" class="zoom-zh"></div>
+        <div id="zoom-pron" class="zoom-pron"></div>
+      </div>
+      <div>
+        <div id="zoom-feedback" style="font-size:12px;color:var(--green);min-height:18px;margin-bottom:6px;text-align:center;"></div>
+        <button type="button" id="zoom-speak-btn" class="btn-primary">🔊 念給店員聽（日文語音）</button>
+        <button type="button" id="zoom-copy-btn" class="btn-secondary" style="margin-bottom:0;">📋 複製這句日文</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部五分頁固定導覽列（已移除小遊戲） -->
+  <nav class="bottom-nav" aria-label="主導覽列">
+    <div class="bottom-nav-inner">
+      <button type="button" class="nav-tab active" data-tab="tl">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>時間表</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="exp">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span>記帳</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="pl">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span>美食</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>小卡</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="more">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg>
+        <span>更多</span>
+      </button>
+    </div>
+  </nav>
+
+  <script src="./data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
