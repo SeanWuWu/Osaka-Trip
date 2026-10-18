@@ -750,16 +750,16 @@ html, body {
   color: var(--accent);
 }
 
-/* 時間設定（下拉選單置於時間左側） */
+/* 時間設定（第1列：下拉選單置左＋開始時間；第2列：獨立結束時間） */
 .time-setting-row {
   display: grid;
-  grid-template-columns: 135px 1fr;
+  grid-template-columns: 140px 1fr;
   gap: 8px;
   align-items: center;
 }
 @media (max-width: 360px) {
   .time-setting-row {
-    grid-template-columns: 115px 1fr;
+    grid-template-columns: 120px 1fr;
   }
 }
 .time-preset-select {
@@ -781,13 +781,6 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-width: 0;
-}
-.wheel-group-inline {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex: 1;
   min-width: 0;
 }
 .wheel-select-sm {
@@ -814,29 +807,70 @@ html, body {
   font-size: 14px;
   user-select: none;
 }
-.wheel-to {
-  font-size: 12px;
-  color: var(--sub);
-  white-space: nowrap;
-  padding: 0 2px;
-  user-select: none;
+
+/* 獨立下一列：結束時間 */
+.time-setting-end-row {
+  display: grid;
+  grid-template-columns: 105px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #F4F8FA;
+  border: 1px dashed rgba(186, 215, 233, 0.9);
+  border-radius: 8px;
+  animation: modalSheetPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.time-end-toggle-btn {
-  height: 44px;
+@media (max-width: 360px) {
+  .time-setting-end-row {
+    grid-template-columns: 90px 1fr auto;
+  }
+}
+.time-end-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.time-end-wheel-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.time-end-wheel-group .wheel-select-sm {
+  height: 38px;
+}
+.time-end-remove-btn {
+  height: 38px;
   padding: 0 10px;
   font-size: 12px;
   font-weight: 700;
-  border-radius: 8px;
-  border: 1px solid rgba(186, 215, 233, 0.8);
-  background: #F4F8FA;
-  color: var(--accent);
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #FFFFFF;
+  color: #B0432E;
   cursor: pointer;
   white-space: nowrap;
-  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.time-end-remove-btn:active {
+  background: #FDE8E8;
+}
+.time-end-toggle-btn {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
   transition: all 0.15s;
 }
 .time-end-toggle-btn:active {
-  background: var(--accent-soft);
+  transform: scale(0.96);
 }
 .time-token-preview {
   font-size: 12px;

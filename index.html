@@ -118,9 +118,14 @@
             </div>
           </div>
 
-          <!-- 3. 時間設定（左邊為時段快速下拉選單，右邊為時分選擇與迄時開關） -->
+          <!-- 3. 時間設定（第1列：時段下拉＋開始時間；第2列：獨立結束時間） -->
           <div class="form-field">
-            <label class="form-label">時間設定</label>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <label class="form-label" style="margin-bottom:0;">時間設定</label>
+              <button type="button" id="tl-toggle-end-btn" class="time-end-toggle-btn">＋ 設定結束時間</button>
+            </div>
+
+            <!-- 第 1 列：時段下拉（左）＋ 開始時間（右） -->
             <div class="time-setting-row">
               <select id="tl-time-preset-select" class="form-select time-preset-select" aria-label="快速時段選單">
                 <option value="">⏱️ 自訂時間</option>
@@ -135,20 +140,23 @@
               </select>
 
               <div id="tl-wheel-area" class="wheel-area-inline">
-                <div class="wheel-group-inline">
-                  <select id="tl-start-hour" class="wheel-select-sm" aria-label="開始小時"></select>
-                  <span class="wheel-colon">:</span>
-                  <select id="tl-start-min" class="wheel-select-sm" aria-label="開始分鐘"></select>
-                </div>
-                <div id="tl-end-wheel-wrap" class="wheel-group-inline" style="display:none;">
-                  <span class="wheel-to">至</span>
-                  <select id="tl-end-hour" class="wheel-select-sm" aria-label="結束小時"></select>
-                  <span class="wheel-colon">:</span>
-                  <select id="tl-end-min" class="wheel-select-sm" aria-label="結束分鐘"></select>
-                </div>
-                <button type="button" id="tl-toggle-end-btn" class="time-end-toggle-btn" title="切換是否設定結束時間">＋迄</button>
+                <select id="tl-start-hour" class="wheel-select-sm" aria-label="開始小時"></select>
+                <span class="wheel-colon">:</span>
+                <select id="tl-start-min" class="wheel-select-sm" aria-label="開始分鐘"></select>
               </div>
             </div>
+
+            <!-- 第 2 列：獨立的結束時間列（點擊＋結束時間後展開，完全不擠） -->
+            <div id="tl-end-wheel-wrap" class="time-setting-end-row" style="display:none;">
+              <div class="time-end-tag">↳ 結束時間至</div>
+              <div class="time-end-wheel-group">
+                <select id="tl-end-hour" class="wheel-select-sm" aria-label="結束小時"></select>
+                <span class="wheel-colon">:</span>
+                <select id="tl-end-min" class="wheel-select-sm" aria-label="結束分鐘"></select>
+              </div>
+              <button type="button" id="tl-remove-end-btn" class="time-end-remove-btn" title="拿掉結束時間">✕ 拿掉</button>
+            </div>
+
             <div id="tl-token-preview" class="time-token-preview"></div>
             <div id="tl-token-pills" style="display:none;"></div>
           </div>

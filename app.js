@@ -1225,6 +1225,8 @@
         wheelArea.style.opacity = '0.35';
         wheelArea.style.pointerEvents = 'none';
       }
+      if (endWrap) endWrap.style.display = 'none';
+      if (toggleEndBtn) toggleEndBtn.style.display = 'none';
       if (preview) preview.textContent = `將儲存為：「全天」行程`;
     } else {
       if (wheelArea) {
@@ -1232,8 +1234,11 @@
         wheelArea.style.pointerEvents = 'auto';
         wheelArea.style.display = 'flex';
       }
-      if (endWrap) endWrap.style.display = hasEnd ? 'flex' : 'none';
-      if (toggleEndBtn) toggleEndBtn.textContent = hasEnd ? '拿掉迄' : '＋迄';
+      if (endWrap) endWrap.style.display = hasEnd ? 'grid' : 'none';
+      if (toggleEndBtn) {
+        toggleEndBtn.style.display = hasEnd ? 'none' : 'inline-block';
+        toggleEndBtn.textContent = '＋ 設定結束時間';
+      }
       if (preview) preview.textContent = tok ? `時段推薦：「${tok}」（可微調右側時分）` : '';
     }
   }
@@ -1426,10 +1431,26 @@
       });
     });
 
-    document.getElementById('tl-toggle-end-btn').addEventListener('click', () => {
-      FS.setHasEndTime(!FS.getHasEndTime());
-      syncTimeFormUI();
-    });
+    const toggleEndBtn = document.getElementById('tl-toggle-end-btn');
+    if (toggleEndBtn) {
+      toggleEndBtn.addEventListener('click', () => {
+        FS.setHasEndTime(true);
+        const sh = parseInt(document.getElementById('tl-start-hour').value || '9', 10);
+        const nextH = String((sh + 1) % 24).padStart(2, '0');
+        const nextM = document.getElementById('tl-start-min').value || '00';
+        document.getElementById('tl-end-hour').value = nextH;
+        ensureMinuteOption('tl-end-min', nextM);
+        syncTimeFormUI();
+      });
+    }
+
+    const removeEndBtn = document.getElementById('tl-remove-end-btn');
+    if (removeEndBtn) {
+      removeEndBtn.addEventListener('click', () => {
+        FS.setHasEndTime(false);
+        syncTimeFormUI();
+      });
+    }
 
     document.getElementById('tl-cancel-btn').addEventListener('click', closeTlModal);
     const tlCloseBtn = document.getElementById('tl-modal-close');
