@@ -1154,6 +1154,38 @@
     sm.innerHTML = mHtml;
     em.innerHTML = mHtml;
 
+    const presetSel = document.getElementById('tl-time-preset-select');
+    if (presetSel) {
+      presetSel.addEventListener('change', () => {
+        const tok = presetSel.value;
+        FS.setActiveToken(tok);
+        const defaultTimes = {
+          '早餐': ['08', '30'],
+          '上午': ['10', '00'],
+          '午餐': ['12', '30'],
+          '下午': ['14', '30'],
+          '傍晚': ['17', '00'],
+          '晚餐': ['18', '30'],
+          '宵夜': ['21', '30']
+        };
+        if (defaultTimes[tok]) {
+          const [defH, defM] = defaultTimes[tok];
+          document.getElementById('tl-start-hour').value = defH;
+          ensureMinuteOption('tl-start-min', defM);
+        }
+        syncTimeFormUI();
+      });
+    }
+
+    [sh, sm, eh, em].forEach((selEl) => {
+      selEl.addEventListener('change', () => {
+        if (FS.getActiveToken() === '全天') {
+          FS.setActiveToken('');
+          syncTimeFormUI();
+        }
+      });
+    });
+
     const pillsBox = document.getElementById('tl-token-pills');
     if (pillsBox) {
       const allTokens = ['時鐘', ...C.SPECIAL_TIME_TOKENS];
@@ -1177,20 +1209,32 @@
     const endWrap = document.getElementById('tl-end-wheel-wrap');
     const toggleEndBtn = document.getElementById('tl-toggle-end-btn');
     const preview = document.getElementById('tl-token-preview');
+    const presetSel = document.getElementById('tl-time-preset-select');
+
+    if (presetSel) {
+      presetSel.value = tok || '';
+    }
 
     document.querySelectorAll('#tl-token-pills .token-pill').forEach((b) => {
       const bTok = b.getAttribute('data-tok');
       b.classList.toggle('active', (tok === '' && bTok === '時鐘') || bTok === tok);
     });
 
-    if (tok) {
-      wheelArea.style.display = 'none';
-      preview.textContent = `將儲存為：「${tok}」`;
+    if (tok === '全天') {
+      if (wheelArea) {
+        wheelArea.style.opacity = '0.35';
+        wheelArea.style.pointerEvents = 'none';
+      }
+      if (preview) preview.textContent = `將儲存為：「全天」行程`;
     } else {
-      wheelArea.style.display = 'block';
-      endWrap.style.display = hasEnd ? 'flex' : 'none';
-      toggleEndBtn.textContent = hasEnd ? '拿掉結束時間' : '＋ 加結束時間';
-      preview.textContent = '';
+      if (wheelArea) {
+        wheelArea.style.opacity = '1';
+        wheelArea.style.pointerEvents = 'auto';
+        wheelArea.style.display = 'flex';
+      }
+      if (endWrap) endWrap.style.display = hasEnd ? 'flex' : 'none';
+      if (toggleEndBtn) toggleEndBtn.textContent = hasEnd ? '拿掉迄' : '＋迄';
+      if (preview) preview.textContent = tok ? `時段推薦：「${tok}」（可微調右側時分）` : '';
     }
   }
 
@@ -1267,6 +1311,8 @@
     const curTag = tag || '';
     const inp = document.getElementById('tl-custom-tag');
     if (inp) inp.value = curTag;
+    const typeSel = document.getElementById('tl-type-select');
+    if (typeSel) typeSel.value = curTag;
     document.querySelectorAll('#tl-tag-pills .badge-tag-btn').forEach((b) => {
       b.classList.toggle('active', b.getAttribute('data-tag') === curTag);
     });
@@ -1326,7 +1372,13 @@
   window.initTimelineFormEvents = function () {
     populateTimeWheels();
 
-    // 類型小膠囊切換（通勤、住宿、航班；未選則為一般）
+    // 類型下拉與膠囊切換（通勤、住宿、航班；未選則為一般）
+    const typeSelect = document.getElementById('tl-type-select');
+    if (typeSelect) {
+      typeSelect.addEventListener('change', () => {
+        setTimelineTagPills(typeSelect.value);
+      });
+    }
     document.querySelectorAll('#tl-tag-pills .badge-tag-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const clickedTag = btn.getAttribute('data-tag');

@@ -31,9 +31,6 @@
           </div>
         </div>
         <div class="header-right-actions">
-          <button type="button" id="header-sync-status" class="top-icon-btn" title="雲端同步正常（點擊檢查）" aria-label="雲端連線狀態">
-            <span id="sync-dot-live" class="sync-dot-live"></span>
-          </button>
           <button type="button" id="weather-btn" class="top-icon-btn weather-btn" aria-expanded="false" title="查詢 10/22–10/25 天氣預報" aria-label="天氣預報">
             <span class="top-btn-icon">☀</span>
           </button>
@@ -89,6 +86,7 @@
       </button>
 
       <!-- 浮出式新增/編輯行程表單（點鉛筆或新增時彈出，儲存後自動消失） -->
+      <!-- 浮出式新增/編輯行程表單（點鉛筆或新增時彈出，儲存後自動消失） -->
       <div id="tl-modal-backdrop" class="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="tl-modal-title">
         <form id="tl-form" class="app-modal-sheet" novalidate>
           <div class="app-modal-head">
@@ -98,40 +96,64 @@
           <input type="hidden" id="tl-edit-id" value="" />
           <input type="hidden" id="tl-custom-tag" value="" />
 
+          <!-- 1. 地點／事項 -->
           <div class="form-field">
-            <label class="form-label">活動類型（選填，未選則為一般）</label>
-            <div id="tl-tag-pills" class="badge-tag-pills">
+            <label class="form-label" for="tl-title-input">地點／事項</label>
+            <input type="text" id="tl-title-input" class="form-input" placeholder="貼上 Google 地圖的名稱或行程" />
+          </div>
+
+          <!-- 2. 活動類型 -->
+          <div class="form-field">
+            <label class="form-label" for="tl-type-select">活動類型（選填）</label>
+            <select id="tl-type-select" class="form-select">
+              <option value="">一般行程</option>
+              <option value="通勤">🚇 通勤・交通移動</option>
+              <option value="住宿">🏨 住宿・APA飯店</option>
+              <option value="航班">✈️ 航班・搭機往返</option>
+            </select>
+            <div id="tl-tag-pills" style="display:none;">
               <button type="button" class="badge-tag-btn" data-tag="通勤">🚇 通勤</button>
               <button type="button" class="badge-tag-btn" data-tag="住宿">🏨 住宿</button>
               <button type="button" class="badge-tag-btn" data-tag="航班">✈️ 航班</button>
             </div>
           </div>
 
+          <!-- 3. 時間設定（左邊為時段快速下拉選單，右邊為時分選擇與迄時開關） -->
           <div class="form-field">
             <label class="form-label">時間設定</label>
-            <div id="tl-token-pills" class="time-token-pills"></div>
-            <div id="tl-wheel-area">
-              <div class="wheel-group">
-                <select id="tl-start-hour" class="wheel-select" aria-label="開始小時"></select>
-                <span>:</span>
-                <select id="tl-start-min" class="wheel-select" aria-label="開始分鐘"></select>
+            <div class="time-setting-row">
+              <select id="tl-time-preset-select" class="form-select time-preset-select" aria-label="快速時段選單">
+                <option value="">⏱️ 自訂時間</option>
+                <option value="全天">📅 全天</option>
+                <option value="早餐">🍳 早餐 (08:30)</option>
+                <option value="上午">☕ 上午 (10:00)</option>
+                <option value="午餐">🍜 午餐 (12:30)</option>
+                <option value="下午">🍵 下午 (14:30)</option>
+                <option value="傍晚">🌅 傍晚 (17:00)</option>
+                <option value="晚餐">🍱 晚餐 (18:30)</option>
+                <option value="宵夜">🍢 宵夜 (21:30)</option>
+              </select>
+
+              <div id="tl-wheel-area" class="wheel-area-inline">
+                <div class="wheel-group-inline">
+                  <select id="tl-start-hour" class="wheel-select-sm" aria-label="開始小時"></select>
+                  <span class="wheel-colon">:</span>
+                  <select id="tl-start-min" class="wheel-select-sm" aria-label="開始分鐘"></select>
+                </div>
+                <div id="tl-end-wheel-wrap" class="wheel-group-inline" style="display:none;">
+                  <span class="wheel-to">至</span>
+                  <select id="tl-end-hour" class="wheel-select-sm" aria-label="結束小時"></select>
+                  <span class="wheel-colon">:</span>
+                  <select id="tl-end-min" class="wheel-select-sm" aria-label="結束分鐘"></select>
+                </div>
+                <button type="button" id="tl-toggle-end-btn" class="time-end-toggle-btn" title="切換是否設定結束時間">＋迄</button>
               </div>
-              <div id="tl-end-wheel-wrap" class="wheel-group" style="display:none;">
-                <span style="font-size:12px;color:var(--sub);white-space:nowrap;">至</span>
-                <select id="tl-end-hour" class="wheel-select" aria-label="結束小時"></select>
-                <span>:</span>
-                <select id="tl-end-min" class="wheel-select" aria-label="結束分鐘"></select>
-              </div>
-              <button type="button" id="tl-toggle-end-btn" class="btn-secondary" style="margin-bottom:4px;">＋ 加結束時間</button>
             </div>
-            <div id="tl-token-preview" style="font-size:12px;color:var(--accent);font-weight:700;"></div>
+            <div id="tl-token-preview" class="time-token-preview"></div>
+            <div id="tl-token-pills" style="display:none;"></div>
           </div>
 
-          <div class="form-field">
-            <label class="form-label" for="tl-title-input">地點／事項</label>
-            <input type="text" id="tl-title-input" class="form-input" placeholder="貼上 Google 地圖的名稱" />
-          </div>
-
+          <!-- 4. 備註 -->
           <div class="form-field">
             <label class="form-label" for="tl-note-input">備註（選填）</label>
             <textarea id="tl-note-input" class="form-textarea" rows="2" placeholder="交通方式、預約時間或注意事項"></textarea>
@@ -188,22 +210,34 @@
           <input type="hidden" id="exp-edit-id" value="" />
           <input type="hidden" id="exp-capsule-idx" value="" />
 
+          <!-- 1. 項目名稱 -->
           <div class="form-field">
             <label class="form-label" for="exp-title-input">項目名稱</label>
             <input type="text" id="exp-title-input" class="form-input" placeholder="例如：一蘭拉麵、南海電鐵車票、大國藥妝" />
           </div>
 
-          <!-- My-Bank 大字即時金額顯示 ＋ 滑桿 ＋ 步進按鈕 -->
-          <div class="exp-live-price-box">
-            <div class="exp-live-top">
+          <!-- 2. 精緻舒適的金額卡片（保留滑桿、步進、直接輸入、幣別、歸零、常用面額與即時換算） -->
+          <div class="exp-hero-card">
+            <div class="exp-amount-input-row">
+              <select id="exp-currency-select" class="exp-currency-badge" aria-label="選擇幣別">
+                <option value="JPY">日圓 ¥</option>
+                <option value="TWD">台幣 $</option>
+              </select>
+              <input type="number" id="exp-amount-input" class="exp-hero-input" placeholder="0" inputmode="numeric" min="0" step="1" />
+              <button type="button" id="exp-zero-btn" class="exp-zero-pill" title="金額歸零">⌫ 歸零</button>
+            </div>
+
+            <div class="exp-conversion-row">
               <div>
-                <span id="exp-live-num" class="exp-live-num">¥ 2,500</span>
+                <span id="exp-live-num" class="exp-live-num" style="display:none;">¥ 2,500</span>
                 <span id="exp-live-conv" class="exp-live-conv">≈ NT$ 538</span>
               </div>
               <button type="button" id="exp-pin-default-btn" class="pin-default-btn" style="display:none;">📌 設為預設價</button>
             </div>
 
-            <input type="range" id="exp-price-slider" class="price-slider" min="0" max="20000" step="100" value="2500" />
+            <div class="exp-slider-wrap">
+              <input type="range" id="exp-price-slider" class="price-slider" min="0" max="20000" step="100" value="2500" />
+            </div>
 
             <div id="exp-step-row" class="step-row">
               <button type="button" class="step-btn" data-step="-1000">-1000</button>
@@ -212,19 +246,14 @@
               <button type="button" class="step-btn" data-step="1000">+1000</button>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 98px 72px;gap:6px;align-items:center;">
-              <input type="number" id="exp-amount-input" class="form-input" placeholder="直接輸入金額" inputmode="numeric" min="0" step="1" />
-              <select id="exp-currency-select" class="form-select">
-                <option value="JPY">日圓 ¥</option>
-                <option value="TWD">台幣 $</option>
-              </select>
-              <button type="button" id="exp-zero-btn" class="btn-secondary" style="margin-top:0;padding:10px 4px;font-size:12px;">⌫ 歸零</button>
+            <div class="exp-presets-section">
+              <span class="exp-presets-label">常用面額：</span>
+              <div id="exp-preset-chips" class="preset-chips-row"></div>
             </div>
-
-            <div id="exp-preset-chips" class="preset-chips-row"></div>
           </div>
 
-          <div class="form-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <!-- 3. 類別與誰付的 -->
+          <div class="form-field-grid-2">
             <div>
               <label class="form-label" for="exp-category-select">類別</label>
               <select id="exp-category-select" class="form-select"></select>
@@ -238,12 +267,14 @@
             </div>
           </div>
 
+          <!-- 4. 使用對象分攤 -->
           <div class="form-field">
-            <label class="form-label">使用對象（點選切換）</label>
+            <label class="form-label">使用對象（平分或個人）</label>
             <div id="exp-split-group" class="split-check-row"></div>
-            <div id="exp-preview-line" style="font-size:12px;color:var(--green);margin-top:6px;font-weight:600;"></div>
+            <div id="exp-preview-line" class="exp-split-preview"></div>
           </div>
 
+          <!-- 5. 備註 -->
           <div class="form-field">
             <label class="form-label" for="exp-note-input">備註（選填）</label>
             <input type="text" id="exp-note-input" class="form-input" placeholder="例如：刷卡、付現、待補金額" />
@@ -439,6 +470,20 @@
         <span class="accordion-arrow">▾</span>
       </div>
       <div id="more-supa-wrap" class="card accordion-body collapsed">
+        <!-- 雲端同步即時狀態與快速診斷卡片（由頂部移入更多） -->
+        <div class="supa-status-card">
+          <div class="supa-status-row">
+            <div class="supa-status-info">
+              <span class="sync-dot-live" id="sync-dot-live"></span>
+              <span id="sync-text-live" style="font-size:13px;font-weight:700;color:var(--text);">雲端連線正常</span>
+            </div>
+            <button type="button" id="header-sync-status" class="fx-pill" style="font-weight:700;color:var(--accent);border-color:var(--accent);background:var(--accent-soft);">🔍 立即診斷連線</button>
+          </div>
+          <div style="font-size:11.5px;color:var(--sub);margin-top:6px;">
+            專屬旅冊房間：<code>osaka_2026_couple</code>（與越南 main 完全隔離）
+          </div>
+        </div>
+
         <div style="font-size:13px;font-weight:700;margin-bottom:4px;">雙人手機即時同步（已預設連接共用 Supabase）</div>
         <p style="font-size:12px;color:var(--sub);margin-bottom:8px;">
           已自動連通您的 Supabase 後台（資料表 <code>trip_store</code>，專屬隔離代號 <code>id="osaka_2026_couple"</code>），與越南專案（<code>id="main"</code>）100% 獨立互不干擾，打開即可雙向同步！
